@@ -6,7 +6,6 @@ require_admin_login();
 $db = get_db();
 $success_msg = '';
 $error_msg   = '';
-$active_tab  = $_GET['tab'] ?? 'general';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -36,16 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if (!$error_msg) {
             $success_msg = 'General settings saved.';
-            $active_tab = 'general';
         }
-    } elseif ($action === 'save_letterhead') {
-        $letterhead = $_POST['letterhead_html'] ?? '';
-        $footer     = $_POST['footer_html'] ?? '';
-        $stmt = $db->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (?,?) ON DUPLICATE KEY UPDATE setting_value=?');
-        $stmt->execute(['letterhead_html', $letterhead, $letterhead]);
-        $stmt->execute(['footer_html', $footer, $footer]);
-        $success_msg = 'Letterhead settings saved.';
-        $active_tab = 'letterhead';
     }
 }
 
@@ -65,7 +55,6 @@ foreach ($settings_rows as $row) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../assets/css/admin.css">
-    <script src="../assets/tinymce/tinymce.min.js"></script>
 </head>
 <body>
 <?php include __DIR__ . '/includes/sidebar.php'; ?>
@@ -84,17 +73,6 @@ foreach ($settings_rows as $row) {
     <div class="alert alert-danger py-2 small mb-3"><i class="bi bi-exclamation-triangle me-1"></i><?= htmlspecialchars($error_msg) ?></div>
     <?php endif; ?>
 
-    <!-- Tabs -->
-    <div class="admin-tabs">
-        <a href="?tab=general" class="tab-link <?= $active_tab === 'general' ? 'active' : '' ?>">
-            <i class="bi bi-building"></i> General
-        </a>
-        <a href="?tab=letterhead" class="tab-link <?= $active_tab === 'letterhead' ? 'active' : '' ?>">
-            <i class="bi bi-file-earmark-richtext"></i> Letterhead & Footer
-        </a>
-    </div>
-
-    <?php if ($active_tab === 'general'): ?>
     <!-- General Settings -->
     <div class="admin-card">
         <div class="card-header">
@@ -148,78 +126,9 @@ foreach ($settings_rows as $row) {
         </div>
     </div>
 
-    <?php elseif ($active_tab === 'letterhead'): ?>
-    <!-- Letterhead Settings -->
-    <div class="admin-card">
-        <div class="card-header">
-            <h5><i class="bi bi-file-earmark-richtext"></i> Letterhead & Footer HTML</h5>
-        </div>
-        <div class="card-body">
-            <form method="POST" id="letterheadForm">
-                <input type="hidden" name="action" value="save_letterhead">
-                <div class="mb-4">
-                    <label class="admin-form-label">Letterhead HTML</label>
-                    <p class="text-muted small mb-2">This appears at the top of all generated documents. Use inline styles for PDF compatibility.</p>
-                    <textarea id="letterhead_html" name="letterhead_html" rows="8"><?= htmlspecialchars($settings['letterhead_html'] ?? '') ?></textarea>
-                </div>
-                <div class="mb-4">
-                    <label class="admin-form-label">Footer HTML</label>
-                    <p class="text-muted small mb-2">This appears at the bottom of all generated documents.</p>
-                    <textarea id="footer_html" name="footer_html" rows="5"><?= htmlspecialchars($settings['footer_html'] ?? '') ?></textarea>
-                </div>
-                <button type="submit" class="btn-admin-primary" onclick="tinymce.triggerSave()">
-                    <i class="bi bi-save"></i> Save Letterhead Settings
-                </button>
-            </form>
-        </div>
-    </div>
-    <?php endif; ?>
-
 </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<?php if ($active_tab === 'letterhead'): ?>
-<script>
-const RICH_FONTS =
-    'Arial=arial,helvetica,sans-serif;' +
-    'Calibri=calibri,sans-serif;' +
-    'Cambria=cambria,georgia,serif;' +
-    'Georgia=georgia,palatino,serif;' +
-    'Times New Roman=times new roman,times,serif;' +
-    'Verdana=verdana,geneva,sans-serif';
-const RICH_SIZES = '8pt 9pt 10pt 11pt 12pt 14pt 16pt 18pt 20pt 24pt 28pt 36pt';
-
-tinymce.init({
-    selector: '#letterhead_html',
-    plugins: 'advlist autolink lists link image charmap code table',
-    menubar: 'format table',
-    toolbar: 'fontfamily fontsize | bold italic underline | forecolor backcolor | alignleft aligncenter alignright | bullist numlist | table image | code',
-    toolbar_mode: 'wrap',
-    height: 260,
-    promotion: false,
-    branding: false,
-    font_family_formats: RICH_FONTS,
-    font_size_formats: RICH_SIZES,
-    content_style: 'body { font-family: "Times New Roman", serif; font-size: 12pt; }',
-});
-tinymce.init({
-    selector: '#footer_html',
-    plugins: 'advlist autolink lists link image charmap code',
-    menubar: 'format',
-    toolbar: 'fontfamily fontsize | bold italic underline | forecolor backcolor | alignleft aligncenter alignright | bullist numlist | image | code',
-    toolbar_mode: 'wrap',
-    height: 200,
-    promotion: false,
-    branding: false,
-    font_family_formats: RICH_FONTS,
-    font_size_formats: RICH_SIZES,
-    content_style: 'body { font-family: "Times New Roman", serif; font-size: 12pt; }',
-});
-document.getElementById('letterheadForm').addEventListener('submit', function() {
-    tinymce.triggerSave();
-});
-</script>
-<?php endif; ?>
 </body>
 </html>
