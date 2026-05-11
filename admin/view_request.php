@@ -52,7 +52,7 @@ $error_msg   = $_GET['error'] ?? '';
                 <i class="bi bi-arrow-left"></i> Back
             </a>
             <a href="download_docx?id=<?= $id ?>" class="btn-admin-primary btn-admin-sm">
-                <i class="bi bi-file-earmark-word"></i> Download DOCX
+                <i class="bi bi-file-earmark-word"></i> Print DOCX
             </a>
         </div>
     </div>
