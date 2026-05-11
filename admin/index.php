@@ -76,6 +76,11 @@ $uni_name = get_setting('university_name') ?: 'Capiz State University';
                 <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
             </button>
         </form>
+        <div class="text-center mt-3">
+            <a href="forgot_password" class="text-muted small text-decoration-none">
+                <i class="bi bi-key me-1"></i>Forgot Password?
+            </a>
+        </div>
 
         <div class="text-center mt-4">
             <a href="../index" class="text-muted small text-decoration-none">
