@@ -1,0 +1,4 @@
+# Prevent direct browser access to uploaded DOCX template files.
+# Files are served through PHP (download_template_file.php) after auth check.
+Order deny,allow
+Deny from all

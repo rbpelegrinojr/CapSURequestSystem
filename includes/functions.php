@@ -66,7 +66,8 @@ function get_request_types_with_templates() {
     $db = get_db();
     $stmt = $db->query(
         'SELECT rt.*, dt.id AS template_id, dt.template_content,
-                dt.header_html, dt.footer_html, dt.layout_json
+                dt.header_html, dt.footer_html, dt.layout_json,
+                dt.template_docx_path
          FROM request_types rt
          LEFT JOIN document_templates dt ON rt.id = dt.request_type_id
          ORDER BY rt.id ASC'
@@ -159,4 +160,73 @@ function log_email($request_id, $recipient_email, $subject, $status = 'sent') {
 
 function sanitize_html_output($str) {
     return htmlspecialchars((string)$str, ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * Build the flat key→value replacements map for a request (no HTML/XML escaping).
+ * Used by docx template filling where each caller handles its own escaping.
+ */
+function build_template_replacements($request_data, $additional_data = []) {
+    $replacements = [
+        'requester_name'       => $request_data['requester_name'] ?? '',
+        'requester_email'      => $request_data['requester_email'] ?? '',
+        'requester_phone'      => $request_data['requester_phone'] ?? '',
+        'requester_department' => $request_data['requester_department'] ?? '',
+        'requester_position'   => $request_data['requester_position'] ?? '',
+        'purpose'              => $request_data['purpose'] ?? '',
+        'tracking_number'      => $request_data['tracking_number'] ?? '',
+        'submitted_at'         => format_date($request_data['submitted_at'] ?? ''),
+        'current_date'         => date('F d, Y'),
+        'type_name'            => $request_data['type_name'] ?? '',
+    ];
+
+    if (is_string($additional_data)) {
+        $additional_data = json_decode($additional_data, true) ?: [];
+    }
+
+    foreach ((array)$additional_data as $key => $value) {
+        $replacements[trim($key)] = (string)$value;
+    }
+
+    return $replacements;
+}
+
+/**
+ * Fill a Word XML part (document.xml, header*.xml, footer*.xml) with request data.
+ * Values are XML-escaped. Also handles the common case where Word splits a
+ * placeholder across multiple adjacent w:t elements in the same w:r run.
+ */
+function fill_template_for_xml($xml_content, $request_data, $additional_data = []) {
+    $replacements = build_template_replacements($request_data, $additional_data);
+
+    // Pre-process: merge text fragments within each run (<w:r>) so that a
+    // placeholder such as {{name}} that Word stored as two adjacent <w:t> nodes
+    // inside the same <w:r> is joined into one before replacement.
+    $xml_content = preg_replace_callback(
+        '/(<w:r\b[^>]*>)(.*?)(<\/w:r>)/s',
+        function ($m) {
+            // Collect all <w:t> content within this run
+            $run_inner = $m[2];
+            $texts = [];
+            preg_match_all('/<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/s', $run_inner, $hits);
+            if (count($hits[1]) > 1) {
+                // More than one w:t in this run — join them into the first one
+                $joined = implode('', $hits[1]);
+                // Replace all w:t elements with a single one preserving xml:space
+                $run_inner = preg_replace('/<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/s', '', $run_inner, -1);
+                $run_inner .= '<w:t xml:space="preserve">' . $joined . '</w:t>';
+            }
+            return $m[1] . $run_inner . $m[3];
+        },
+        $xml_content
+    );
+
+    // Replace placeholders with XML-escaped values
+    return preg_replace_callback('/\{\{\s*([^}]+?)\s*\}\}/', function ($m) use ($replacements) {
+        $key = trim($m[1]);
+        if (array_key_exists($key, $replacements)) {
+            return htmlspecialchars($replacements[$key], ENT_XML1 | ENT_COMPAT, 'UTF-8');
+        }
+        return $m[0];
+    }, $xml_content);
 }

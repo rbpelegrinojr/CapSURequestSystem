@@ -25,6 +25,23 @@ $template = $stmt2->fetch();
 $success_msg = '';
 $error_msg   = '';
 
+// Resolve messages from redirects (set by upload_template_docx.php)
+$redirect_success = $_GET['success'] ?? '';
+$redirect_error   = $_GET['error'] ?? '';
+if ($redirect_success === 'docx_uploaded') {
+    $success_msg = 'Word template uploaded successfully. It will now be used when generating DOCX files.';
+} elseif ($redirect_success === 'docx_cleared') {
+    $success_msg = 'Word template removed. The HTML editor template will be used instead.';
+} elseif ($redirect_error === 'invalid_type') {
+    $error_msg = 'Invalid file type. Please upload a .docx file.';
+} elseif ($redirect_error === 'invalid_docx') {
+    $error_msg = 'The uploaded file is not a valid Word document (.docx). Please try again.';
+} elseif ($redirect_error === 'upload_failed') {
+    $error_msg = 'File upload failed. Please check your server configuration and try again.';
+} elseif ($redirect_error === 'save_failed') {
+    $error_msg = 'Could not save the uploaded file. Please check directory permissions.';
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $template_content = $_POST['template_content'] ?? '';
 
@@ -43,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Reload template
     $stmt2->execute([$type_id]);
     $template = $stmt2->fetch();
-    $success_msg = 'Template saved successfully.';
+    $success_msg = 'HTML template saved successfully.';
 }
 
 $letterhead    = get_setting('letterhead_html') ?: '';
@@ -125,8 +142,8 @@ HTML;
             <a href="templates.php" class="btn-admin-primary btn-admin-sm" style="background:var(--text-muted);">
                 <i class="bi bi-arrow-left"></i> Back
             </a>
-            <button type="button" class="btn-admin-primary btn-admin-sm" onclick="previewTemplate()">
-                <i class="bi bi-eye"></i> Preview
+            <button type="button" id="previewBtn" class="btn-admin-primary btn-admin-sm" onclick="previewTemplate()">
+                <i class="bi bi-eye"></i> Preview HTML
             </button>
         </div>
     </div>
@@ -153,75 +170,258 @@ HTML;
         </div>
     </div>
 
-    <form method="POST" id="templateForm">
+    <?php
+    $has_docx = !empty($template['template_docx_path']);
+    $docx_file = $has_docx ? __DIR__ . '/docx_templates/' . basename($template['template_docx_path']) : '';
+    $docx_exists = $has_docx && file_exists($docx_file);
+    // Default tab: show Word upload tab if a docx already exists, else HTML editor
+    $default_tab = $docx_exists ? 'word' : 'html';
+    if (isset($_GET['tab'])) {
+        $default_tab = $_GET['tab'] === 'word' ? 'word' : 'html';
+    }
+    ?>
 
-        <div class="row g-3">
-            <div class="col-lg-9">
+    <!-- Tab navigation -->
+    <ul class="nav nav-tabs mb-3" id="templateTabs" role="tablist" style="border-bottom:2px solid var(--border-color);">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link <?= $default_tab === 'word' ? 'active' : '' ?>" id="tab-word-btn"
+                    data-bs-toggle="tab" data-bs-target="#tab-word" type="button" role="tab">
+                <i class="bi bi-file-word me-1"></i> Upload Word Template
+                <?php if ($docx_exists): ?>
+                <span class="badge bg-success ms-1" style="font-size:0.7rem;">Active</span>
+                <?php endif; ?>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link <?= $default_tab === 'html' ? 'active' : '' ?>" id="tab-html-btn"
+                    data-bs-toggle="tab" data-bs-target="#tab-html" type="button" role="tab">
+                <i class="bi bi-code-slash me-1"></i> HTML Editor
+                <?php if ($docx_exists): ?>
+                <span class="badge ms-1" style="font-size:0.7rem;background:#6c757d;">Fallback</span>
+                <?php endif; ?>
+            </button>
+        </li>
+    </ul>
 
-                <!-- Document Editor -->
-                <div class="admin-card mb-3">
-                    <div class="card-header">
-                        <h5><i class="bi bi-file-earmark-word"></i> Document Template</h5>
-                        <span class="text-muted small">Edit your full document — add headers, images, tables, and use <code>{{ placeholder }}</code> variables</span>
+    <div class="tab-content" id="templateTabContent">
+
+        <!-- ══ TAB 1: Upload Word Template ══════════════════════════════════ -->
+        <div class="tab-pane fade <?= $default_tab === 'word' ? 'show active' : '' ?>" id="tab-word" role="tabpanel">
+            <div class="row g-3">
+                <div class="col-lg-9">
+
+                    <!-- Current .docx status -->
+                    <?php if ($docx_exists): ?>
+                    <div class="admin-card mb-3" style="border-left:4px solid #198754;">
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="bi bi-file-word" style="font-size:2rem;color:#198754;"></i>
+                                    <div>
+                                        <div style="font-weight:600;color:#198754;"><i class="bi bi-check-circle me-1"></i>Word Template Active</div>
+                                        <div class="text-muted small">
+                                            <?= htmlspecialchars(basename($template['template_docx_path'])) ?>
+                                            &nbsp;·&nbsp;
+                                            <?= number_format(filesize($docx_file) / 1024, 1) ?> KB
+                                        </div>
+                                        <div class="small mt-1" style="color:#555;">
+                                            This Word file is used when generating DOCX documents for this request type.
+                                            The HTML editor below is the fallback when no Word template is uploaded.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2 flex-shrink-0">
+                                    <a href="download_template_file.php?type_id=<?= $type_id ?>"
+                                       class="btn-admin-primary btn-admin-sm">
+                                        <i class="bi bi-download"></i> Download
+                                    </a>
+                                    <form method="POST" action="upload_template_docx.php"
+                                          onsubmit="return confirm('Remove the uploaded Word template?');">
+                                        <input type="hidden" name="type_id" value="<?= $type_id ?>">
+                                        <input type="hidden" name="action" value="clear">
+                                        <button type="submit" class="btn-admin-primary btn-admin-sm"
+                                                style="background:#dc3545;border-color:#dc3545;">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body p-0">
-                        <textarea id="template_content" name="template_content"><?= htmlspecialchars($starter_template) ?></textarea>
+                    <?php else: ?>
+                    <div class="admin-card mb-3" style="border-left:4px solid #ffc107;">
+                        <div class="card-body py-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-info-circle" style="color:#856404;"></i>
+                                <span class="small" style="color:#856404;">
+                                    No Word template uploaded yet. Upload a <code>.docx</code> file below to use it for
+                                    document generation. The HTML editor is used as the fallback.
+                                </span>
+                            </div>
+                        </div>
                     </div>
+                    <?php endif; ?>
+
+                    <!-- Upload form -->
+                    <div class="admin-card mb-3">
+                        <div class="card-header">
+                            <h5><i class="bi bi-cloud-upload"></i> <?= $docx_exists ? 'Replace' : 'Upload' ?> Word Template</h5>
+                            <span class="text-muted small">Upload a <code>.docx</code> file designed in Microsoft Word or LibreOffice Writer</span>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="upload_template_docx.php" enctype="multipart/form-data" id="docxUploadForm">
+                                <input type="hidden" name="type_id" value="<?= $type_id ?>">
+                                <input type="hidden" name="action" value="upload">
+                                <div class="mb-3">
+                                    <label class="admin-form-label" for="template_docx">Choose .docx file</label>
+                                    <input type="file" name="template_docx" id="template_docx"
+                                           class="form-control" accept=".docx" required>
+                                    <div class="form-text">Only <strong>.docx</strong> files (Word 2007 or later) are accepted. Maximum upload size is determined by your server's <code>upload_max_filesize</code> setting.</div>
+                                </div>
+                                <button type="submit" class="btn-admin-gold">
+                                    <i class="bi bi-cloud-upload"></i> Upload Template
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- How-to guide -->
+                    <div class="admin-card">
+                        <div class="card-header">
+                            <h5><i class="bi bi-book"></i> How to Create a Word Template</h5>
+                        </div>
+                        <div class="card-body">
+                            <ol class="small mb-0" style="line-height:2;">
+                                <li>Open <strong>Microsoft Word</strong> or <strong>LibreOffice Writer</strong> and design your document layout (letterhead, fonts, tables, signatures, etc.).</li>
+                                <li>Place <strong>placeholder tags</strong> exactly where you want the request data to appear — for example, type <code>{{requester_name}}</code> where the employee's name should go. See the placeholder list on the right.</li>
+                                <li><strong>Important:</strong> type each placeholder tag as a single continuous word — do not break it across lines or apply mixed formatting mid-tag. The tag must begin with <code>{{</code> and end with <code>}}</code> with no line breaks inside.</li>
+                                <li>Save the file as <strong>Word Document (.docx)</strong>.</li>
+                                <li>Upload it using the form above. When an admin downloads a DOCX for any request of this type, the placeholders will be automatically replaced with the requester's actual data.</li>
+                            </ol>
+                        </div>
+                    </div>
+
                 </div>
 
-            </div>
-
-            <!-- Right: Placeholders -->
-            <div class="col-lg-3">
-                <div class="admin-card" style="position:sticky;top:80px;">
-                    <div class="card-header">
-                        <h5><i class="bi bi-braces"></i> Placeholders</h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted small mb-3">Click to insert into the document at the cursor position.</p>
-                        <?php
-                        $common_placeholders = [
-                            'requester_name'       => 'Full name',
-                            'requester_email'      => 'Email address',
-                            'requester_phone'      => 'Phone number',
-                            'requester_department' => 'Department',
-                            'requester_position'   => 'Position / Designation',
-                            'purpose'              => 'Purpose of request',
-                            'tracking_number'      => 'Tracking number',
-                            'current_date'         => 'Current date',
-                            'submitted_at'         => 'Submission date',
-                            'type_name'            => 'Request type name',
-                        ];
-                        foreach ($common_placeholders as $key => $label): ?>
-                        <div class="mb-1">
-                            <span class="placeholder-tag" onclick="insertPlaceholder(<?= htmlspecialchars(json_encode('{{ ' . $key . ' }}'), ENT_QUOTES) ?>)" title="<?= htmlspecialchars($label) ?>">
-                                {{ <?= htmlspecialchars($key) ?> }}
-                            </span>
+                <!-- Right: Placeholder reference for Word -->
+                <div class="col-lg-3">
+                    <div class="admin-card" style="position:sticky;top:80px;">
+                        <div class="card-header">
+                            <h5><i class="bi bi-braces"></i> Placeholders</h5>
                         </div>
-                        <?php endforeach; ?>
+                        <div class="card-body">
+                            <p class="text-muted small mb-2">Type these exactly in your Word document. Click to copy.</p>
+                            <?php
+                            $common_placeholders = [
+                                'requester_name'       => 'Full name',
+                                'requester_email'      => 'Email address',
+                                'requester_phone'      => 'Phone number',
+                                'requester_department' => 'Department',
+                                'requester_position'   => 'Position / Designation',
+                                'purpose'              => 'Purpose of request',
+                                'tracking_number'      => 'Tracking number',
+                                'current_date'         => 'Current date',
+                                'submitted_at'         => 'Submission date',
+                                'type_name'            => 'Request type name',
+                            ];
+                            foreach ($common_placeholders as $key => $label): ?>
+                            <div class="mb-1">
+                                <span class="placeholder-tag" onclick="copyToClipboard(<?= htmlspecialchars(json_encode('{{' . $key . '}}'), ENT_QUOTES) ?>)" title="Click to copy — <?= htmlspecialchars($label) ?>">
+                                    {{<?= htmlspecialchars($key) ?>}}
+                                </span>
+                            </div>
+                            <?php endforeach; ?>
 
-                        <?php if (!empty($form_fields)): ?>
-                        <hr>
-                        <p class="text-muted small mb-2">Type-specific fields:</p>
-                        <?php foreach ($form_fields as $ff): ?>
-                        <div class="mb-1">
-                            <span class="placeholder-tag field" onclick="insertPlaceholder(<?= htmlspecialchars(json_encode('{{ ' . $ff['name'] . ' }}'), ENT_QUOTES) ?>)" title="<?= htmlspecialchars($ff['label']) ?>">
-                                {{ <?= htmlspecialchars($ff['name']) ?> }}
-                            </span>
+                            <?php if (!empty($form_fields)): ?>
+                            <hr>
+                            <p class="text-muted small mb-2">Type-specific fields:</p>
+                            <?php foreach ($form_fields as $ff): ?>
+                            <div class="mb-1">
+                                <span class="placeholder-tag field" onclick="copyToClipboard(<?= htmlspecialchars(json_encode('{{' . $ff['name'] . '}}'), ENT_QUOTES) ?>)" title="Click to copy — <?= htmlspecialchars($ff['label']) ?>">
+                                    {{<?= htmlspecialchars($ff['name']) ?>}}
+                                </span>
+                            </div>
+                            <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
-                        <?php endforeach; ?>
-                        <?php endif; ?>
-                    </div>
-                    <div class="card-body" style="border-top:1px solid var(--border-color);padding-top:16px;">
-                        <button type="submit" class="btn-admin-gold w-100 justify-content-center">
-                            <i class="bi bi-save"></i> Save Template
-                        </button>
                     </div>
                 </div>
             </div>
+        </div><!-- /tab-word -->
 
-        </div>
-    </form>
+        <!-- ══ TAB 2: HTML Editor ═══════════════════════════════════════════ -->
+        <div class="tab-pane fade <?= $default_tab === 'html' ? 'show active' : '' ?>" id="tab-html" role="tabpanel">
+
+            <?php if ($docx_exists): ?>
+            <div class="alert alert-warning py-2 small mb-3">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                A <strong>Word (.docx) template is active</strong> for this request type. The HTML editor below is used
+                only as a fallback (e.g. for Print view) when no Word template is uploaded.
+                To use this HTML template for DOCX generation, first remove the uploaded Word template on the
+                <strong>Upload Word Template</strong> tab.
+            </div>
+            <?php endif; ?>
+
+            <form method="POST" id="templateForm">
+
+                <div class="row g-3">
+                    <div class="col-lg-9">
+
+                        <!-- Document Editor -->
+                        <div class="admin-card mb-3">
+                            <div class="card-header">
+                                <h5><i class="bi bi-file-earmark-word"></i> HTML Document Template</h5>
+                                <span class="text-muted small">Edit your full document — add headers, images, tables, and use <code>{{ placeholder }}</code> variables</span>
+                            </div>
+                            <div class="card-body p-0">
+                                <textarea id="template_content" name="template_content"><?= htmlspecialchars($starter_template) ?></textarea>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Right: Placeholders (HTML editor) -->
+                    <div class="col-lg-3">
+                        <div class="admin-card" style="position:sticky;top:80px;">
+                            <div class="card-header">
+                                <h5><i class="bi bi-braces"></i> Placeholders</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted small mb-3">Click to insert into the document at the cursor position.</p>
+                                <?php foreach ($common_placeholders as $key => $label): ?>
+                                <div class="mb-1">
+                                    <span class="placeholder-tag" onclick="insertPlaceholder(<?= htmlspecialchars(json_encode('{{ ' . $key . ' }}'), ENT_QUOTES) ?>)" title="<?= htmlspecialchars($label) ?>">
+                                        {{ <?= htmlspecialchars($key) ?> }}
+                                    </span>
+                                </div>
+                                <?php endforeach; ?>
+
+                                <?php if (!empty($form_fields)): ?>
+                                <hr>
+                                <p class="text-muted small mb-2">Type-specific fields:</p>
+                                <?php foreach ($form_fields as $ff): ?>
+                                <div class="mb-1">
+                                    <span class="placeholder-tag field" onclick="insertPlaceholder(<?= htmlspecialchars(json_encode('{{ ' . $ff['name'] . ' }}'), ENT_QUOTES) ?>)" title="<?= htmlspecialchars($ff['label']) ?>">
+                                        {{ <?= htmlspecialchars($ff['name']) ?> }}
+                                    </span>
+                                </div>
+                                <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                            <div class="card-body" style="border-top:1px solid var(--border-color);padding-top:16px;">
+                                <button type="submit" class="btn-admin-gold w-100 justify-content-center">
+                                    <i class="bi bi-save"></i> Save HTML Template
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </form>
+
+        </div><!-- /tab-html -->
+
+    </div><!-- /tab-content -->
 
     <!-- Preview Modal -->
     <div class="modal fade" id="previewModal" tabindex="-1">
@@ -362,17 +562,26 @@ function insertPlaceholder(text) {
         editor.focus();
         editor.insertContent(text);
     } else {
-        // Fallback: copy to clipboard
-        navigator.clipboard.writeText(text).catch(() => {
-            const el = document.createElement('input');
-            el.value = text;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-        });
-        showToast('Copied: ' + text);
+        copyToClipboard(text);
     }
+}
+
+// Copy text to clipboard and show a toast confirmation
+function copyToClipboard(text) {
+    const fallback = () => {
+        const el = document.createElement('input');
+        el.value = text;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+    };
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).catch(fallback);
+    } else {
+        fallback();
+    }
+    showToast('Copied: ' + text);
 }
 
 function showToast(msg) {
@@ -383,7 +592,7 @@ function showToast(msg) {
     setTimeout(() => toast.remove(), 2200);
 }
 
-// Preview: show filled content in modal
+// Preview: show filled content in modal (HTML editor only)
 function previewTemplate() {
     const editor = tinymce.get('template_content');
     let content = editor ? editor.getContent() : document.getElementById('template_content').value;
@@ -406,6 +615,21 @@ function previewTemplate() {
 document.getElementById('templateForm').addEventListener('submit', function() {
     tinymce.triggerSave();
 });
+
+// Show/hide the "Preview HTML" button based on active tab
+document.getElementById('tab-html-btn').addEventListener('shown.bs.tab', function() {
+    document.getElementById('previewBtn').style.display = '';
+});
+document.getElementById('tab-word-btn').addEventListener('shown.bs.tab', function() {
+    document.getElementById('previewBtn').style.display = 'none';
+});
+// Initial state
+(function() {
+    const defaultTab = <?= json_encode($default_tab) ?>;
+    if (defaultTab !== 'html') {
+        document.getElementById('previewBtn').style.display = 'none';
+    }
+})();
 </script>
 </body>
 </html>

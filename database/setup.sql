@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS document_templates (
   header_html LONGTEXT,
   footer_html TEXT,
   layout_json JSON,
+  template_docx_path VARCHAR(255) DEFAULT NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (request_type_id) REFERENCES request_types(id)
 );
