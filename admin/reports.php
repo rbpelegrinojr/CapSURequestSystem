@@ -84,7 +84,7 @@ $total_in_range = array_sum($summary);
     </div>
 
     <!-- Filters -->
-    <form method="GET" action="reports.php" class="filter-bar no-print">
+    <form method="GET" action="reports" class="filter-bar no-print">
         <div>
             <label class="d-block" style="font-size:0.78rem;font-weight:600;color:var(--text-muted);margin-bottom:4px;">Date From</label>
             <input type="date" name="date_from" value="<?= htmlspecialchars($date_from) ?>">
@@ -117,7 +117,7 @@ $total_in_range = array_sum($summary);
             <button type="submit" class="btn-admin-primary">
                 <i class="bi bi-funnel"></i> Apply
             </button>
-            <a href="reports.php" class="btn-admin-primary" style="background:var(--text-muted);">Clear</a>
+            <a href="reports" class="btn-admin-primary" style="background:var(--text-muted);">Clear</a>
         </div>
     </form>
 

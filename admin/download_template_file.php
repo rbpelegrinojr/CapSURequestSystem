@@ -5,7 +5,7 @@ require_admin_login();
 
 $type_id = filter_input(INPUT_GET, 'type_id', FILTER_VALIDATE_INT);
 if (!$type_id) {
-    header('Location: templates.php');
+    header('Location: templates');
     exit;
 }
 
@@ -20,13 +20,13 @@ $stmt->execute([$type_id]);
 $row = $stmt->fetch();
 
 if (!$row || !$row['template_docx_path']) {
-    header('Location: template_editor.php?type_id=' . $type_id . '&error=no_docx');
+    header('Location: template_editor?type_id=' . $type_id . '&error=no_docx');
     exit;
 }
 
 $file_path = __DIR__ . '/docx_templates/' . basename($row['template_docx_path']);
 if (!file_exists($file_path)) {
-    header('Location: template_editor.php?type_id=' . $type_id . '&error=file_missing');
+    header('Location: template_editor?type_id=' . $type_id . '&error=file_missing');
     exit;
 }
 

@@ -4,7 +4,7 @@ require_once __DIR__ . '/../includes/functions.php';
 require_admin_login();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: requests.php');
+    header('Location: requests');
     exit;
 }
 
@@ -13,13 +13,13 @@ $subject    = trim($_POST['subject'] ?? '');
 $message    = trim($_POST['message'] ?? '');
 
 if (!$request_id || empty($subject) || empty($message)) {
-    header('Location: requests.php');
+    header('Location: requests');
     exit;
 }
 
 $request = get_request_with_type($request_id);
 if (!$request) {
-    header('Location: requests.php');
+    header('Location: requests');
     exit;
 }
 
@@ -45,8 +45,8 @@ $sent = send_system_email(
 log_email($request_id, $request['requester_email'], $subject, $sent ? 'sent' : 'failed');
 
 if ($sent) {
-    header('Location: view_request.php?id=' . $request_id . '&success=' . urlencode('Email sent successfully.'));
+    header('Location: view_request?id=' . $request_id . '&success=' . urlencode('Email sent successfully.'));
 } else {
-    header('Location: view_request.php?id=' . $request_id . '&error=' . urlencode('Email could not be sent. Check your mail configuration.'));
+    header('Location: view_request?id=' . $request_id . '&error=' . urlencode('Email could not be sent. Check your mail configuration.'));
 }
 exit;

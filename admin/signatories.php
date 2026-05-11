@@ -145,7 +145,7 @@ if ($edit_id) {
                         <?= $edit_sig ? 'Edit Signatory' : 'Add Signatory' ?>
                     </h5>
                     <?php if ($edit_sig): ?>
-                    <a href="signatories.php" class="btn-admin-primary btn-admin-sm" style="background:var(--text-muted);">
+                    <a href="signatories" class="btn-admin-primary btn-admin-sm" style="background:var(--text-muted);">
                         <i class="bi bi-x"></i> Cancel
                     </a>
                     <?php endif; ?>

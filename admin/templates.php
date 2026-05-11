@@ -80,7 +80,7 @@ $templates = get_request_types_with_templates();
                             </code>
                         </td>
                         <td>
-                            <a href="template_editor.php?type_id=<?= $tpl['id'] ?>" class="btn-admin-primary btn-admin-sm">
+                            <a href="template_editor?type_id=<?= $tpl['id'] ?>" class="btn-admin-primary btn-admin-sm">
                                 <i class="bi bi-pencil-square"></i> Edit
                             </a>
                         </td>

@@ -1,14 +1,14 @@
 <?php
-$current_page = basename($_SERVER['PHP_SELF']);
+$current_page = basename($_SERVER['PHP_SELF'], '.php');
 $uni_name = get_setting('university_name') ?: 'Capiz State University';
 
 $nav_links = [
-    ['href' => 'dashboard.php',      'icon' => 'bi-speedometer2',         'label' => 'Dashboard'],
-    ['href' => 'requests.php',        'icon' => 'bi-inbox',                 'label' => 'All Requests'],
-    ['href' => 'request_types.php',   'icon' => 'bi-list-task',             'label' => 'Request Types'],
-    ['href' => 'templates.php',       'icon' => 'bi-file-earmark-richtext', 'label' => 'Document Templates'],
-    ['href' => 'reports.php',         'icon' => 'bi-bar-chart-line',        'label' => 'Reports'],
-    ['href' => 'settings.php',        'icon' => 'bi-gear',                  'label' => 'Settings'],
+    ['href' => 'dashboard',      'icon' => 'bi-speedometer2',         'label' => 'Dashboard'],
+    ['href' => 'requests',        'icon' => 'bi-inbox',                 'label' => 'All Requests'],
+    ['href' => 'request_types',   'icon' => 'bi-list-task',             'label' => 'Request Types'],
+    ['href' => 'templates',       'icon' => 'bi-file-earmark-richtext', 'label' => 'Document Templates'],
+    ['href' => 'reports',         'icon' => 'bi-bar-chart-line',        'label' => 'Reports'],
+    ['href' => 'settings',        'icon' => 'bi-gear',                  'label' => 'Settings'],
 ];
 
 // Count pending for badge
@@ -35,7 +35,7 @@ try {
                    class="nav-link <?= ($current_page === $link['href']) ? 'active' : '' ?>">
                     <i class="bi <?= $link['icon'] ?>"></i>
                     <span><?= $link['label'] ?></span>
-                    <?php if ($link['href'] === 'requests.php' && $pending_count > 0): ?>
+                    <?php if ($link['href'] === 'requests' && $pending_count > 0): ?>
                     <span style="background:#dc3545;color:#fff;font-size:0.7rem;padding:1px 7px;border-radius:10px;margin-left:auto;font-weight:700;">
                         <?= $pending_count ?>
                     </span>
@@ -48,7 +48,7 @@ try {
         <div class="nav-section-label mt-2">Quick Access</div>
         <ul class="list-unstyled mb-0">
             <li class="nav-item">
-                <a href="../index.php" target="_blank" class="nav-link">
+                <a href="../index" target="_blank" class="nav-link">
                     <i class="bi bi-box-arrow-up-right"></i>
                     <span>User Portal</span>
                 </a>
@@ -57,7 +57,7 @@ try {
     </nav>
 
     <div class="sidebar-footer">
-        <a href="logout.php">
+        <a href="logout">
             <i class="bi bi-box-arrow-right"></i>
             <span>Sign Out</span>
         </a>

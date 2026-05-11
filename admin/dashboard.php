@@ -32,7 +32,7 @@ $recent = $db->query(
     <div class="page-header-bar">
         <h4><i class="bi bi-speedometer2"></i> Dashboard</h4>
         <div class="d-flex gap-2">
-            <a href="requests.php?status=pending" class="btn-admin-gold btn-admin-sm">
+            <a href="requests?status=pending" class="btn-admin-gold btn-admin-sm">
                 <i class="bi bi-clock"></i> View Pending
             </a>
         </div>
@@ -51,7 +51,7 @@ $recent = $db->query(
         ];
         foreach ($stat_cards as $card): ?>
         <div class="col-6 col-lg-4 col-xl-2">
-            <a href="requests.php<?= $card['key'] !== 'total' ? '?status='.$card['key'] : '' ?>" class="stat-card">
+            <a href="requests<?= $card['key'] !== 'total' ? '?status='.$card['key'] : '' ?>" class="stat-card">
                 <div class="stat-icon" style="background:<?= $card['bg'] ?>;">
                     <i class="bi <?= $card['icon'] ?>" style="color:<?= $card['color'] ?>;"></i>
                 </div>
@@ -68,7 +68,7 @@ $recent = $db->query(
     <div class="admin-card">
         <div class="card-header">
             <h5><i class="bi bi-clock-history"></i> Recent Requests</h5>
-            <a href="requests.php" class="btn-admin-primary btn-admin-sm">View All</a>
+            <a href="requests" class="btn-admin-primary btn-admin-sm">View All</a>
         </div>
         <div class="card-body p-0">
             <?php if (empty($recent)): ?>
@@ -100,7 +100,7 @@ $recent = $db->query(
                             <td><?= format_status_badge($req['status']) ?></td>
                             <td class="text-muted small"><?= date('M d, Y', strtotime($req['submitted_at'])) ?></td>
                             <td>
-                                <a href="view_request.php?id=<?= $req['id'] ?>" class="btn-admin-primary btn-admin-sm">
+                                <a href="view_request?id=<?= $req['id'] ?>" class="btn-admin-primary btn-admin-sm">
                                     <i class="bi bi-eye"></i> View
                                 </a>
                             </td>

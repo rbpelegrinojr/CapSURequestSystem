@@ -5,13 +5,13 @@ require_admin_login();
 
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$id) {
-    header('Location: requests.php');
+    header('Location: requests');
     exit;
 }
 
 $request = get_request_with_type($id);
 if (!$request) {
-    header('Location: requests.php');
+    header('Location: requests');
     exit;
 }
 

@@ -84,7 +84,7 @@ function build_url($overrides = []) {
     </div>
 
     <!-- Filters -->
-    <form method="GET" action="requests.php" class="filter-bar">
+    <form method="GET" action="requests" class="filter-bar">
         <div>
             <label class="d-block" style="font-size:0.78rem;font-weight:600;color:var(--text-muted);margin-bottom:4px;">Search</label>
             <input type="text" name="search" value="<?= htmlspecialchars($search) ?>"
@@ -114,7 +114,7 @@ function build_url($overrides = []) {
             <button type="submit" class="btn-admin-primary">
                 <i class="bi bi-search"></i> Filter
             </button>
-            <a href="requests.php" class="btn-admin-primary" style="background:var(--text-muted);">
+            <a href="requests" class="btn-admin-primary" style="background:var(--text-muted);">
                 <i class="bi bi-x-lg"></i> Clear
             </a>
         </div>
@@ -160,7 +160,7 @@ function build_url($overrides = []) {
                             <td><?= format_status_badge($req['status']) ?></td>
                             <td class="text-muted small"><?= date('M d, Y', strtotime($req['submitted_at'])) ?></td>
                             <td>
-                                <a href="view_request.php?id=<?= $req['id'] ?>" class="btn-admin-primary btn-admin-sm">
+                                <a href="view_request?id=<?= $req['id'] ?>" class="btn-admin-primary btn-admin-sm">
                                     <i class="bi bi-eye"></i>
                                 </a>
                             </td>

@@ -214,7 +214,7 @@ if ($edit_id) {
                                         <a href="?edit=<?= $t['id'] ?>" class="btn-admin-primary btn-admin-sm">
                                             <i class="bi bi-pencil"></i> Edit
                                         </a>
-                                        <a href="template_editor.php?type_id=<?= $t['id'] ?>" class="btn-admin-gold btn-admin-sm">
+                                        <a href="template_editor?type_id=<?= $t['id'] ?>" class="btn-admin-gold btn-admin-sm">
                                             <i class="bi bi-file-earmark-text"></i> Template
                                         </a>
                                         <?php if ((int)$t['request_count'] === 0): ?>
@@ -248,7 +248,7 @@ if ($edit_id) {
                         <?= $edit_type ? 'Edit Request Type' : 'Add Request Type' ?>
                     </h5>
                     <?php if ($edit_type): ?>
-                    <a href="request_types.php" class="btn-admin-primary btn-admin-sm" style="background:var(--text-muted);">
+                    <a href="request_types" class="btn-admin-primary btn-admin-sm" style="background:var(--text-muted);">
                         <i class="bi bi-x"></i> Cancel
                     </a>
                     <?php endif; ?>

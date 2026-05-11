@@ -4,7 +4,7 @@ require_once __DIR__ . '/../includes/functions.php';
 require_admin_login();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: requests.php');
+    header('Location: requests');
     exit;
 }
 
@@ -12,7 +12,7 @@ $action     = $_POST['action'] ?? '';
 $request_id = filter_input(INPUT_POST, 'request_id', FILTER_VALIDATE_INT);
 
 if (!$request_id) {
-    header('Location: requests.php');
+    header('Location: requests');
     exit;
 }
 
@@ -20,7 +20,7 @@ $db = get_db();
 $request = get_request_with_type($request_id);
 
 if (!$request) {
-    header('Location: requests.php');
+    header('Location: requests');
     exit;
 }
 
@@ -31,7 +31,7 @@ if ($action === 'update_status') {
     $notify         = !empty($_POST['notify_requester']);
 
     if (!in_array($new_status, $valid_statuses)) {
-        header('Location: view_request.php?id=' . $request_id . '&error=' . urlencode('Invalid status.'));
+        header('Location: view_request?id=' . $request_id . '&error=' . urlencode('Invalid status.'));
         exit;
     }
 
@@ -98,9 +98,9 @@ if ($action === 'update_status') {
         log_email($request_id, $request['requester_email'], $subject, $sent ? 'sent' : 'failed');
     }
 
-    header('Location: view_request.php?id=' . $request_id . '&success=' . urlencode('Status updated successfully.'));
+    header('Location: view_request?id=' . $request_id . '&success=' . urlencode('Status updated successfully.'));
     exit;
 }
 
-header('Location: view_request.php?id=' . $request_id);
+header('Location: view_request?id=' . $request_id);
 exit;

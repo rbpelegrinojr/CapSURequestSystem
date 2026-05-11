@@ -38,7 +38,7 @@ $is_rejected = $request && $request['status'] === 'rejected';
 <!-- HEADER -->
 <header class="site-header">
     <nav class="navbar navbar-expand-lg container-xl">
-        <a class="navbar-brand" href="index.php">
+        <a class="navbar-brand" href="index">
             <div class="brand-logo-circle">CS</div>
             <div class="brand-text">
                 <span class="brand-name"><?= htmlspecialchars($uni_name) ?></span>
@@ -50,8 +50,8 @@ $is_rejected = $request && $request['status'] === 'rejected';
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="index.php"><i class="bi bi-house-door me-1"></i>Home</a></li>
-                <li class="nav-item"><a class="nav-link active" href="track_request.php"><i class="bi bi-search me-1"></i>Track Request</a></li>
+                <li class="nav-item"><a class="nav-link" href="index"><i class="bi bi-house-door me-1"></i>Home</a></li>
+                <li class="nav-item"><a class="nav-link active" href="track_request"><i class="bi bi-search me-1"></i>Track Request</a></li>
             </ul>
         </div>
     </nav>
@@ -80,7 +80,7 @@ $is_rejected = $request && $request['status'] === 'rejected';
                         <i class="bi bi-radar me-2" style="color:var(--accent-gold);"></i>Track Your Request
                     </h4>
                     <p class="text-muted small mb-4">Enter your tracking number to check the current status of your request.</p>
-                    <form method="GET" action="track_request.php">
+                    <form method="GET" action="track_request">
                         <div class="d-flex gap-2">
                             <input type="text" name="tracking" class="form-control"
                                    value="<?= htmlspecialchars($tracking) ?>"
@@ -211,7 +211,7 @@ $is_rejected = $request && $request['status'] === 'rejected';
                 <?php endif; ?>
 
                 <div class="text-center mt-4">
-                    <a href="index.php" class="btn btn-outline-secondary">
+                    <a href="index" class="btn btn-outline-secondary">
                         <i class="bi bi-arrow-left me-2"></i>Back to Home
                     </a>
                 </div>
