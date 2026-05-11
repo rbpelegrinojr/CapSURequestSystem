@@ -3,7 +3,7 @@ name: CapSu Request Deployment
 on:
   push:
     branches:
-      - main
+      - version1
 
 jobs:
   ftp-deploy:
