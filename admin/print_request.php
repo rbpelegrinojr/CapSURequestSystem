@@ -37,6 +37,7 @@ $filled_content = fill_template($template_content, $request, $additional_data);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($request['type_name']) ?> — <?= htmlspecialchars($request['tracking_number']) ?></title>
+    <?php $uni_favicon = get_setting('university_logo'); if (!empty($uni_favicon)): ?><link rel="icon" href="<?= htmlspecialchars('../' . $uni_favicon) ?>"><?php endif; ?>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
