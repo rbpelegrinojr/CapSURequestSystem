@@ -17,6 +17,7 @@ $uni_name    = get_setting('university_name') ?: 'Capiz State University';
 $uni_address = get_setting('university_address') ?: 'Fuentes Drive, Roxas City, Capiz';
 $uni_phone   = get_setting('university_phone') ?: '(036) 620-0367';
 $uni_email   = get_setting('university_email') ?: 'info@capsu.edu.ph';
+$uni_logo    = get_setting('university_logo');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -34,7 +35,11 @@ $uni_email   = get_setting('university_email') ?: 'info@capsu.edu.ph';
 <header class="site-header">
     <nav class="navbar navbar-expand-lg container-xl">
         <a class="navbar-brand" href="index">
-            <div class="brand-logo-circle">CS</div>
+            <div class="brand-logo-circle">
+                    <?php if (!empty($uni_logo)): ?>
+                    <img src="<?= htmlspecialchars($uni_logo) ?>" alt="<?= htmlspecialchars($uni_name) ?> Logo" class="brand-logo-img brand-logo-img--circle">
+                    <?php else: ?>CS<?php endif; ?>
+                </div>
             <div class="brand-text">
                 <span class="brand-name"><?= htmlspecialchars($uni_name) ?></span>
                 <span class="brand-subtitle">Document Request System</span>
