@@ -13,7 +13,7 @@ function generate_tracking_number() {
     $db = get_db();
     $date = date('Ymd');
     do {
-        $rand = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 5));
+        $rand = strtoupper(substr(bin2hex(random_bytes(4)), 0, 5));
         $tracking = 'CAPSU-' . $date . '-' . $rand;
         $stmt = $db->prepare('SELECT id FROM requests WHERE tracking_number = ?');
         $stmt->execute([$tracking]);

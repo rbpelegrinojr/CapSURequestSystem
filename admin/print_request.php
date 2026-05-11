@@ -256,7 +256,7 @@ $signatories = get_active_signatories();
 </div>
 
 <script>
-// Auto-trigger print after page loads
+// Delay print to ensure all styles and web fonts have finished rendering
 window.addEventListener('load', function() {
     setTimeout(function() {
         window.print();
