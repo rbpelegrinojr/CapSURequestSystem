@@ -25,6 +25,7 @@ $uni_logo    = get_setting('university_logo');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($uni_name) ?> — Request System</title>
+    <?php if (!empty($uni_logo)): ?><link rel="icon" href="<?= htmlspecialchars($uni_logo) ?>"><?php endif; ?>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="assets/css/style.css">
