@@ -29,14 +29,9 @@ $uni_name    = get_setting('university_name') ?: 'Capiz State University';
 $uni_address = get_setting('university_address') ?: '';
 
 $template_content = $template['template_content'] ?? '';
-$header_html      = $template['header_html'] ?? $letterhead;
-$footer_html      = $template['footer_html'] ?? $global_footer;
-$layout = json_decode($template['layout_json'] ?? '[]', true) ?: ['header','content','signatories','footer'];
 
-// Fill template
+// Fill template placeholders
 $filled_content = fill_template($template_content, $request, $additional_data);
-$filled_header  = fill_template($header_html ?: $letterhead, $request, $additional_data);
-$filled_footer  = fill_template($footer_html ?: $global_footer, $request, $additional_data);
 
 // Signatories
 $signatories = get_active_signatories();
@@ -186,72 +181,58 @@ $signatories = get_active_signatories();
 
 <div class="page">
 
-    <?php foreach ($layout as $section):
-        if ($section === 'header'): ?>
-        <!-- Header / Letterhead -->
+    <?php if ($filled_content): ?>
+        <div class="doc-body">
+            <?= $filled_content ?>
+        </div>
+    <?php else: ?>
+        <!-- Default letterhead + content when no template is set -->
         <div class="doc-header">
-            <?php if ($filled_header): ?>
-                <?= $filled_header ?>
+            <?php if ($letterhead): ?>
+                <?= $letterhead ?>
             <?php else: ?>
                 <h2><?= htmlspecialchars($uni_name) ?></h2>
                 <p><?= htmlspecialchars($uni_address) ?></p>
                 <div class="divider"></div>
             <?php endif; ?>
         </div>
-
-        <?php elseif ($section === 'content'): ?>
-        <!-- Document Content -->
         <div class="doc-title">
             <h3><?= htmlspecialchars($request['type_name']) ?></h3>
         </div>
-
-        <div class="doc-date">
-            <?= date('F d, Y') ?>
-        </div>
-
+        <div class="doc-date"><?= date('F d, Y') ?></div>
         <p class="doc-salutation">TO WHOM IT MAY CONCERN:</p>
-
         <div class="doc-body">
-            <?= $filled_content ?: '<p style="color:#999;text-align:center;">[No template content configured. Please edit the template in the admin panel.]</p>' ?>
+            <p style="color:#999;text-align:center;">[No template content configured. Please edit the template in the admin panel.]</p>
         </div>
+    <?php endif; ?>
 
-        <?php elseif ($section === 'signatories' && !empty($signatories)): ?>
-        <!-- Signatory Section -->
-        <div class="signatory-section">
-            <table style="width:100%;margin-top:40pt;">
-                <tr>
-                    <?php foreach ($signatories as $sig): ?>
-                    <td style="text-align:center;width:<?= round(100 / count($signatories)) ?>%;padding:0 10pt;">
-                        <div style="margin-top:30pt;">
-                            <div style="border-top:1px solid #000;padding-top:6pt;">
-                                <strong style="font-size:11pt;"><?= htmlspecialchars($sig['name']) ?></strong><br>
-                                <span style="font-size:10pt;"><?= htmlspecialchars($sig['title']) ?></span>
-                            </div>
+    <!-- Signatory Section -->
+    <?php if (!empty($signatories)): ?>
+    <div class="signatory-section">
+        <table style="width:100%;margin-top:40pt;">
+            <tr>
+                <?php foreach ($signatories as $sig): ?>
+                <td style="text-align:center;width:<?= round(100 / count($signatories)) ?>%;padding:0 10pt;">
+                    <div style="margin-top:30pt;">
+                        <div style="border-top:1px solid #000;padding-top:6pt;">
+                            <strong style="font-size:11pt;"><?= htmlspecialchars($sig['name']) ?></strong><br>
+                            <span style="font-size:10pt;"><?= htmlspecialchars($sig['title']) ?></span>
                         </div>
-                    </td>
-                    <?php endforeach; ?>
-                </tr>
-            </table>
-        </div>
+                    </div>
+                </td>
+                <?php endforeach; ?>
+            </tr>
+        </table>
+    </div>
+    <?php endif; ?>
 
-        <?php elseif ($section === 'footer'): ?>
-        <!-- Footer -->
-        <div class="doc-footer-area">
-            <?php if ($filled_footer): ?>
-                <?= $filled_footer ?>
-            <?php endif; ?>
-        </div>
-
-        <!-- Tracking Info -->
-        <div class="tracking-info">
-            Tracking No.: <strong><?= htmlspecialchars($request['tracking_number']) ?></strong>
-            &nbsp;&bull;&nbsp; Request Type: <?= htmlspecialchars($request['type_name']) ?>
-            &nbsp;&bull;&nbsp; Submitted: <?= format_date($request['submitted_at']) ?>
-            &nbsp;&bull;&nbsp; Generated: <?= date('F d, Y g:i A') ?>
-        </div>
-
-        <?php endif;
-    endforeach; ?>
+    <!-- Tracking Info -->
+    <div class="tracking-info">
+        Tracking No.: <strong><?= htmlspecialchars($request['tracking_number']) ?></strong>
+        &nbsp;&bull;&nbsp; Request Type: <?= htmlspecialchars($request['type_name']) ?>
+        &nbsp;&bull;&nbsp; Submitted: <?= format_date($request['submitted_at']) ?>
+        &nbsp;&bull;&nbsp; Generated: <?= date('F d, Y g:i A') ?>
+    </div>
 
 </div>
 

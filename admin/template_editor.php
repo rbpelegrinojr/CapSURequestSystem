@@ -27,26 +27,17 @@ $error_msg   = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $template_content = $_POST['template_content'] ?? '';
-    $header_html      = $_POST['header_html'] ?? '';
-    $footer_html      = $_POST['footer_html'] ?? '';
-    $layout_json_raw  = $_POST['layout_json'] ?? '';
-
-    $layout_json = null;
-    if ($layout_json_raw) {
-        $decoded = json_decode($layout_json_raw, true);
-        $layout_json = $decoded ? $layout_json_raw : null;
-    }
 
     if ($template) {
         $stmt3 = $db->prepare(
             'UPDATE document_templates SET template_content=?, header_html=?, footer_html=?, layout_json=? WHERE request_type_id=?'
         );
-        $stmt3->execute([$template_content, $header_html, $footer_html, $layout_json, $type_id]);
+        $stmt3->execute([$template_content, '', '', null, $type_id]);
     } else {
         $stmt3 = $db->prepare(
             'INSERT INTO document_templates (request_type_id, template_content, header_html, footer_html, layout_json) VALUES (?,?,?,?,?)'
         );
-        $stmt3->execute([$type_id, $template_content, $header_html, $footer_html, $layout_json]);
+        $stmt3->execute([$type_id, $template_content, '', '', null]);
     }
 
     // Reload template
@@ -55,11 +46,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $success_msg = 'Template saved successfully.';
 }
 
-$letterhead = get_setting('letterhead_html') ?: '';
+$letterhead    = get_setting('letterhead_html') ?: '';
 $footer_default = get_setting('footer_html') ?: '';
+$form_fields   = json_decode($request_type['form_fields'] ?? '[]', true) ?: [];
 
-$current_layout = json_decode($template['layout_json'] ?? '[]', true) ?: ['header','content','signatories','footer'];
-$form_fields = json_decode($request_type['form_fields'] ?? '[]', true) ?: [];
+// Build a default starter template for new/empty templates
+$starter_template = $template['template_content'] ?? '';
+if ($starter_template === '') {
+    $uni_name    = htmlspecialchars(get_setting('university_name') ?: 'Capiz State University');
+    $uni_address = htmlspecialchars(get_setting('university_address') ?: 'Fuentes Drive, Roxas City, Capiz');
+    $uni_phone   = htmlspecialchars(get_setting('university_phone') ?: '(036) 620-0367');
+    $type_name   = htmlspecialchars($request_type['name']);
+    $starter_template = <<<HTML
+<div style="text-align:center;margin-bottom:20pt;">
+  <h2 style="color:#1a3a6b;font-size:16pt;margin:0;">{$uni_name}</h2>
+  <p style="font-size:10pt;color:#555;margin:2pt 0;">{$uni_address}</p>
+  <p style="font-size:10pt;color:#555;margin:2pt 0;">Tel: {$uni_phone}</p>
+  <hr style="border-top:2px solid #1a3a6b;margin-top:8pt;">
+</div>
+<h3 style="text-align:center;font-size:14pt;text-transform:uppercase;text-decoration:underline;margin:20pt 0;">{$type_name}</h3>
+<p style="text-align:right;margin-bottom:16pt;">{{ current_date }}</p>
+<p>TO WHOM IT MAY CONCERN:</p>
+<p style="text-indent:36pt;">This is to certify that <strong>{{ requester_name }}</strong>, <em>{{ requester_position }}</em> of the <em>{{ requester_department }}</em>, has requested this document for the purpose of <strong>{{ purpose }}</strong>.</p>
+<p style="text-indent:36pt;">This certification is being issued upon the request of the above-named individual for whatever legal purpose it may serve.</p>
+HTML;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -71,6 +82,36 @@ $form_fields = json_decode($request_type['form_fields'] ?? '[]', true) ?: [];
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../assets/css/admin.css">
     <script src="../assets/tinymce/tinymce.min.js"></script>
+    <style>
+        .placeholder-tag {
+            background: var(--light-bg);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: block;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+            font-family: monospace;
+        }
+        .placeholder-tag:hover {
+            background: var(--primary-navy);
+            color: #fff;
+            border-color: var(--primary-navy);
+        }
+        .placeholder-tag.field {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+        .placeholder-tag.field:hover {
+            background: #c9a84c;
+            color: #1a2a4a;
+            border-color: #c9a84c;
+        }
+        .tox-tinymce {
+            border-radius: 0 0 8px 8px !important;
+        }
+    </style>
 </head>
 <body>
 <?php include __DIR__ . '/includes/sidebar.php'; ?>
@@ -115,94 +156,47 @@ $form_fields = json_decode($request_type['form_fields'] ?? '[]', true) ?: [];
     <form method="POST" id="templateForm">
 
         <div class="row g-3">
-            <div class="col-lg-8">
+            <div class="col-lg-9">
 
-                <!-- Layout Sections Builder -->
+                <!-- Document Editor -->
                 <div class="admin-card mb-3">
                     <div class="card-header">
-                        <h5><i class="bi bi-layout-text-window-reverse"></i> Section Layout</h5>
-                        <span class="text-muted small">Drag to reorder sections</span>
+                        <h5><i class="bi bi-file-earmark-word"></i> Document Template</h5>
+                        <span class="text-muted small">Edit your full document — add headers, images, tables, and use <code>{{ placeholder }}</code> variables</span>
                     </div>
-                    <div class="card-body">
-                        <div id="layoutSections" style="min-height:60px;">
-                            <?php
-                            $section_labels = [
-                                'header'      => ['icon' => 'bi-card-heading',   'label' => 'Header / Letterhead'],
-                                'content'     => ['icon' => 'bi-body-text',      'label' => 'Document Content'],
-                                'signatories' => ['icon' => 'bi-pen',            'label' => 'Signatory Block'],
-                                'footer'      => ['icon' => 'bi-card-footer',    'label' => 'Footer'],
-                            ];
-                            foreach ($current_layout as $section):
-                                $info = $section_labels[$section] ?? ['icon' => 'bi-square', 'label' => ucfirst($section)];
-                            ?>
-                            <div class="signatory-item" data-section="<?= htmlspecialchars($section) ?>">
-                                <i class="bi bi-grip-vertical drag-handle"></i>
-                                <div class="sig-info">
-                                    <div class="sig-name"><i class="bi <?= $info['icon'] ?> me-2"></i><?= $info['label'] ?></div>
-                                </div>
-                                <i class="bi bi-arrows-expand text-muted"></i>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <input type="hidden" name="layout_json" id="layoutJson" value='<?= htmlspecialchars(json_encode($current_layout)) ?>'>
-                    </div>
-                </div>
-
-                <!-- Main Content -->
-                <div class="admin-card mb-3">
-                    <div class="card-header">
-                        <h5><i class="bi bi-body-text"></i> Document Content</h5>
-                    </div>
-                    <div class="card-body">
-                        <textarea id="template_content" name="template_content" rows="12"><?= htmlspecialchars($template['template_content'] ?? '') ?></textarea>
-                    </div>
-                </div>
-
-                <!-- Custom Header -->
-                <div class="admin-card mb-3">
-                    <div class="card-header">
-                        <h5><i class="bi bi-card-heading"></i> Custom Header HTML</h5>
-                        <span class="text-muted small">Leave blank to use global letterhead</span>
-                    </div>
-                    <div class="card-body">
-                        <textarea id="header_html" name="header_html" rows="6"><?= htmlspecialchars($template['header_html'] ?? '') ?></textarea>
-                    </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="admin-card mb-3">
-                    <div class="card-header">
-                        <h5><i class="bi bi-card-footer"></i> Custom Footer HTML</h5>
-                        <span class="text-muted small">Leave blank to use global footer</span>
-                    </div>
-                    <div class="card-body">
-                        <textarea id="footer_html" name="footer_html" rows="4"><?= htmlspecialchars($template['footer_html'] ?? '') ?></textarea>
+                    <div class="card-body p-0">
+                        <textarea id="template_content" name="template_content"><?= htmlspecialchars($starter_template) ?></textarea>
                     </div>
                 </div>
 
             </div>
 
             <!-- Right: Placeholders -->
-            <div class="col-lg-4">
+            <div class="col-lg-3">
                 <div class="admin-card" style="position:sticky;top:80px;">
                     <div class="card-header">
                         <h5><i class="bi bi-braces"></i> Placeholders</h5>
                     </div>
                     <div class="card-body">
-                        <p class="text-muted small mb-3">Click to copy, then paste into the editor.</p>
+                        <p class="text-muted small mb-3">Click to insert into the document at the cursor position.</p>
                         <?php
                         $common_placeholders = [
-                            '{{requester_name}}', '{{requester_email}}', '{{requester_phone}}',
-                            '{{requester_department}}', '{{requester_position}}', '{{purpose}}',
-                            '{{tracking_number}}', '{{current_date}}', '{{submitted_at}}', '{{type_name}}',
+                            'requester_name'       => 'Full name',
+                            'requester_email'      => 'Email address',
+                            'requester_phone'      => 'Phone number',
+                            'requester_department' => 'Department',
+                            'requester_position'   => 'Position / Designation',
+                            'purpose'              => 'Purpose of request',
+                            'tracking_number'      => 'Tracking number',
+                            'current_date'         => 'Current date',
+                            'submitted_at'         => 'Submission date',
+                            'type_name'            => 'Request type name',
                         ];
-                        foreach ($common_placeholders as $ph): ?>
+                        foreach ($common_placeholders as $key => $label): ?>
                         <div class="mb-1">
-                            <code onclick="copyPlaceholder('<?= htmlspecialchars($ph) ?>')"
-                                  style="background:var(--light-bg);padding:4px 10px;border-radius:6px;font-size:0.8rem;cursor:pointer;display:block;border:1px solid var(--border-color);transition:all 0.2s;"
-                                  title="Click to copy">
-                                <?= htmlspecialchars($ph) ?>
-                            </code>
+                            <span class="placeholder-tag" onclick="insertPlaceholder(<?= htmlspecialchars(json_encode('{{ ' . $key . ' }}'), ENT_QUOTES) ?>)" title="<?= htmlspecialchars($label) ?>">
+                                {{ <?= htmlspecialchars($key) ?> }}
+                            </span>
                         </div>
                         <?php endforeach; ?>
 
@@ -211,11 +205,9 @@ $form_fields = json_decode($request_type['form_fields'] ?? '[]', true) ?: [];
                         <p class="text-muted small mb-2">Type-specific fields:</p>
                         <?php foreach ($form_fields as $ff): ?>
                         <div class="mb-1">
-                            <code onclick="copyPlaceholder('{{<?= htmlspecialchars($ff['name']) ?>}}')"
-                                  style="background:#fff3cd;padding:4px 10px;border-radius:6px;font-size:0.8rem;cursor:pointer;display:block;border:1px solid #ffc107;transition:all 0.2s;"
-                                  title="<?= htmlspecialchars($ff['label']) ?>">
-                                {{<?= htmlspecialchars($ff['name']) ?>}}
-                            </code>
+                            <span class="placeholder-tag field" onclick="insertPlaceholder(<?= htmlspecialchars(json_encode('{{ ' . $ff['name'] . ' }}'), ENT_QUOTES) ?>)" title="<?= htmlspecialchars($ff['label']) ?>">
+                                {{ <?= htmlspecialchars($ff['name']) ?> }}
+                            </span>
                         </div>
                         <?php endforeach; ?>
                         <?php endif; ?>
@@ -239,8 +231,8 @@ $form_fields = json_decode($request_type['form_fields'] ?? '[]', true) ?: [];
                     <h5 class="modal-title"><i class="bi bi-eye me-2"></i>Document Preview</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <div id="previewContent" style="background:#fff;padding:40px;border:1px solid #ddd;font-family:Times New Roman,serif;font-size:12pt;min-height:300px;"></div>
+                <div class="modal-body" style="background:#f5f5f5;padding:32px;">
+                    <div id="previewContent" style="background:#fff;padding:1in 1in 0.75in;width:8.5in;margin:0 auto;font-family:'Times New Roman',serif;font-size:12pt;min-height:11in;box-shadow:0 2px 20px rgba(0,0,0,0.15);"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
@@ -253,9 +245,8 @@ $form_fields = json_decode($request_type['form_fields'] ?? '[]', true) ?: [];
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script>
-// Shared TinyMCE font configuration
+// Shared font configuration
 const EDITOR_FONT_FAMILIES =
     'Arial=arial,helvetica,sans-serif;' +
     'Arial Black=arial black,gadget,sans-serif;' +
@@ -272,20 +263,21 @@ const EDITOR_FONT_FAMILIES =
     'Trebuchet MS=trebuchet ms,helvetica,sans-serif;' +
     'Verdana=verdana,geneva,sans-serif';
 const EDITOR_FONT_SIZES = '8pt 9pt 10pt 11pt 12pt 14pt 16pt 18pt 20pt 22pt 24pt 26pt 28pt 36pt 48pt 72pt';
-const EDITOR_FONT_SIZES_SMALL = '8pt 9pt 10pt 11pt 12pt 14pt 16pt 18pt 20pt 24pt';
 
-// TinyMCE init — Word-like document editor
+// Word-like document editor
 tinymce.init({
     selector: '#template_content',
     plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks visualchars code fullscreen insertdatetime media table pagebreak nonbreaking directionality charmap wordcount help',
-    menubar: 'edit view insert format table tools help',
+    menubar: 'file edit view insert format table tools help',
     toolbar: [
-        'undo redo | fontfamily fontsize | bold italic underline strikethrough | forecolor backcolor',
+        'undo redo | fontfamily fontsize blocks | bold italic underline strikethrough | forecolor backcolor | removeformat',
         'alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent | blockquote | subscript superscript',
-        'table link image charmap | pagebreak nonbreaking | searchreplace | code fullscreen'
+        'table link image charmap | pagebreak nonbreaking hr | searchreplace | code fullscreen'
     ],
     toolbar_mode: 'wrap',
-    height: 600,
+    height: 700,
+    min_height: 500,
+    resize: true,
     promotion: false,
     branding: false,
     font_family_formats: EDITOR_FONT_FAMILIES,
@@ -298,87 +290,71 @@ tinymce.init({
     table_default_attributes: {
         border: '1',
     },
+    // Allow dragging and dropping images into the editor
+    paste_data_images: true,
+    images_upload_handler: function (blobInfo, progress) {
+        return new Promise(function (resolve) {
+            // Convert to base64 data URL for inline embedding
+            const reader = new FileReader();
+            reader.onload = function () { resolve(reader.result); };
+            reader.readAsDataURL(blobInfo.blob());
+        });
+    },
+    // Show a full document page in the editing area
     content_style: [
         'body {',
         '  font-family: "Times New Roman", serif;',
         '  font-size: 12pt;',
         '  line-height: 1.8;',
-        '  margin: 40px auto;',
-        '  max-width: 816px;',
+        '  color: #000;',
+        '  background: #e8e8e8;',
+        '  padding: 32px;',
+        '}',
+        '.mce-content-body {',
         '  background: #fff;',
-        '  padding: 60px 72px;',
-        '  box-shadow: 0 0 0 1px #ddd;',
+        '  max-width: 816px;',
+        '  margin: 0 auto;',
+        '  padding: 96px 96px 72px;',
+        '  box-shadow: 0 2px 20px rgba(0,0,0,0.2);',
+        '  min-height: 1056px;',
         '}',
         'table, td, th { border: 1px solid #999; padding: 4px 8px; }',
+        'img { max-width: 100%; height: auto; }',
+        'p { margin: 0 0 10pt; }',
     ].join(''),
     setup: function(editor) {
         editor.on('init', function() {
-            editor.getDoc().body.style.background = '#fff';
+            // Apply page styles to the body element inside the iframe
+            const body = editor.getBody();
+            body.style.background = '#fff';
+            body.style.maxWidth = '816px';
+            body.style.margin = '0 auto';
+            body.style.padding = '96px 96px 72px';
+            body.style.boxShadow = '0 2px 20px rgba(0,0,0,0.2)';
+            body.style.minHeight = '1056px';
+            editor.getDoc().body.parentElement.style.background = '#e8e8e8';
         });
     },
 });
 
-// Header editor — richer formatting for letterhead
-tinymce.init({
-    selector: '#header_html',
-    plugins: 'advlist autolink lists link image charmap code table',
-    menubar: 'format table',
-    toolbar: 'fontfamily fontsize | bold italic underline | forecolor backcolor | alignleft aligncenter alignright | bullist numlist | table image | code',
-    toolbar_mode: 'wrap',
-    height: 220,
-    promotion: false,
-    branding: false,
-    font_family_formats: EDITOR_FONT_FAMILIES,
-    font_size_formats: EDITOR_FONT_SIZES_SMALL,
-    content_style: 'body { font-family: "Times New Roman", serif; font-size: 12pt; }',
-});
-
-// Footer editor — richer formatting
-tinymce.init({
-    selector: '#footer_html',
-    plugins: 'advlist autolink lists link image charmap code',
-    menubar: 'format',
-    toolbar: 'fontfamily fontsize | bold italic underline | forecolor backcolor | alignleft aligncenter alignright | bullist numlist | image | code',
-    toolbar_mode: 'wrap',
-    height: 180,
-    promotion: false,
-    branding: false,
-    font_family_formats: EDITOR_FONT_FAMILIES,
-    font_size_formats: EDITOR_FONT_SIZES_SMALL,
-    content_style: 'body { font-family: "Times New Roman", serif; font-size: 12pt; }',
-});
-
-// SortableJS for layout sections
-const sortable = Sortable.create(document.getElementById('layoutSections'), {
-    animation: 150,
-    handle: '.drag-handle',
-    ghostClass: 'sortable-ghost',
-    onEnd: function() {
-        const items = document.querySelectorAll('#layoutSections [data-section]');
-        const order = Array.from(items).map(el => el.dataset.section);
-        document.getElementById('layoutJson').value = JSON.stringify(order);
+// Insert placeholder at the current cursor position in TinyMCE
+function insertPlaceholder(text) {
+    const editor = tinymce.get('template_content');
+    if (editor) {
+        editor.focus();
+        editor.insertContent(text);
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(text).catch(() => {
+            const el = document.createElement('input');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+        });
+        showToast('Copied: ' + text);
     }
-});
-
-// Copy placeholder to clipboard
-function copyPlaceholder(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        // Insert into active TinyMCE editor if available
-        const activeEditor = tinymce.activeEditor;
-        if (activeEditor && activeEditor.id === 'template_content') {
-            activeEditor.insertContent(text);
-        }
-        showToast('Copied: ' + text);
-    }).catch(() => {
-        // fallback
-        const el = document.createElement('input');
-        el.value = text;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-        showToast('Copied: ' + text);
-    });
 }
 
 function showToast(msg) {
@@ -389,38 +365,26 @@ function showToast(msg) {
     setTimeout(() => toast.remove(), 2200);
 }
 
-// Preview
+// Preview: show filled content in modal
 function previewTemplate() {
-    const content = tinymce.get('template_content') ? tinymce.get('template_content').getContent() : document.getElementById('template_content').value;
-    const header  = tinymce.get('header_html') ? tinymce.get('header_html').getContent() : document.getElementById('header_html').value;
-    const footer  = tinymce.get('footer_html') ? tinymce.get('footer_html').getContent() : document.getElementById('footer_html').value;
+    const editor = tinymce.get('template_content');
+    let content = editor ? editor.getContent() : document.getElementById('template_content').value;
 
-    const letterhead = <?= json_encode($letterhead) ?>;
-    const globalFooter = <?= json_encode($footer_default) ?>;
-    const layout = JSON.parse(document.getElementById('layoutJson').value);
+    // Replace sample placeholder values for preview
+    content = content
+        .replace(/\{\{\s*requester_name\s*\}\}/g, 'Juan Dela Cruz')
+        .replace(/\{\{\s*requester_position\s*\}\}/g, 'Assistant Professor II')
+        .replace(/\{\{\s*requester_department\s*\}\}/g, 'College of Engineering')
+        .replace(/\{\{\s*purpose\s*\}\}/g, 'For loan application')
+        .replace(/\{\{\s*tracking_number\s*\}\}/g, 'CAPSU-20240101-XXXXX')
+        .replace(/\{\{\s*current_date\s*\}\}/g, new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}))
+        .replace(/\{\{\s*[^}]+?\s*\}\}/g, '[Sample Data]');
 
-    let html = '';
-    layout.forEach(section => {
-        if (section === 'header') html += (header || letterhead) + '<br>';
-        else if (section === 'content') html += content + '<br>';
-        else if (section === 'signatories') html += '<div style="margin-top:60px;"><table style="width:100%;"><tr><td style="text-align:center;width:50%;border-top:1px solid #333;padding-top:6px;font-weight:bold;">[Signatory Name]</td><td></td></tr></table></div>';
-        else if (section === 'footer') html += '<br>' + (footer || globalFooter);
-    });
-
-    // Replace sample placeholders for preview
-    html = html.replace(/\{\{requester_name\}\}/g, 'Juan Dela Cruz')
-               .replace(/\{\{requester_position\}\}/g, 'Assistant Professor II')
-               .replace(/\{\{requester_department\}\}/g, 'College of Engineering')
-               .replace(/\{\{purpose\}\}/g, 'For loan application')
-               .replace(/\{\{tracking_number\}\}/g, 'CAPSU-20240101-XXXXX')
-               .replace(/\{\{current_date\}\}/g, new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}))
-               .replace(/\{\{[^}]+\}\}/g, '[Sample Data]');
-
-    document.getElementById('previewContent').innerHTML = html;
+    document.getElementById('previewContent').innerHTML = content;
     new bootstrap.Modal(document.getElementById('previewModal')).show();
 }
 
-// Ensure TinyMCE syncs before form submit
+// Sync TinyMCE content to the textarea before form submit
 document.getElementById('templateForm').addEventListener('submit', function() {
     tinymce.triggerSave();
 });
