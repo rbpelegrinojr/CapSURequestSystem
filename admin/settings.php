@@ -10,7 +10,35 @@ $error_msg   = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    if ($action === 'save_general') {
+    if ($action === 'change_password') {
+        $current_password = $_POST['current_password'] ?? '';
+        $new_password     = $_POST['new_password'] ?? '';
+        $confirm_password = $_POST['confirm_password'] ?? '';
+
+        if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
+            $error_msg = 'All password fields are required.';
+        } elseif (strlen($new_password) < 8) {
+            $error_msg = 'New password must be at least 8 characters.';
+        } elseif ($new_password !== $confirm_password) {
+            $error_msg = 'New passwords do not match.';
+        } else {
+            $stmt = $db->prepare('SELECT password FROM admins WHERE id = ?');
+            $stmt->execute([$_SESSION['admin_id']]);
+            $admin = $stmt->fetch();
+            if (!$admin || !password_verify($current_password, $admin['password'])) {
+                $error_msg = 'Current password is incorrect.';
+            } else {
+                $hashed = password_hash($new_password, PASSWORD_DEFAULT);
+                $stmt = $db->prepare('UPDATE admins SET password = ? WHERE id = ?');
+                $stmt->execute([$hashed, $_SESSION['admin_id']]);
+                if ($stmt->rowCount() > 0) {
+                    $success_msg = 'Password changed successfully.';
+                } else {
+                    $error_msg = 'Password could not be updated. Please try again.';
+                }
+            }
+        }
+    } elseif ($action === 'save_general') {
         $keys = ['university_name', 'university_address', 'university_phone', 'university_email', 'admin_email'];
         foreach ($keys as $key) {
             $val = trim($_POST[$key] ?? '');
@@ -121,6 +149,39 @@ foreach ($settings_rows as $row) {
                 <hr class="my-4">
                 <button type="submit" class="btn-admin-primary">
                     <i class="bi bi-save"></i> Save General Settings
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password -->
+    <div class="admin-card mt-4">
+        <div class="card-header">
+            <h5><i class="bi bi-key"></i> Change Password</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" autocomplete="off">
+                <input type="hidden" name="action" value="change_password">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="admin-form-label">Current Password <span class="text-danger">*</span></label>
+                        <input type="password" class="admin-form-control" name="current_password"
+                               placeholder="Enter current password" required autocomplete="current-password">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="admin-form-label">New Password <span class="text-danger">*</span></label>
+                        <input type="password" class="admin-form-control" name="new_password"
+                               placeholder="At least 8 characters" required minlength="8" autocomplete="new-password">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="admin-form-label">Confirm New Password <span class="text-danger">*</span></label>
+                        <input type="password" class="admin-form-control" name="confirm_password"
+                               placeholder="Re-enter new password" required minlength="8" autocomplete="new-password">
+                    </div>
+                </div>
+                <hr class="my-4">
+                <button type="submit" class="btn-admin-primary">
+                    <i class="bi bi-shield-lock"></i> Update Password
                 </button>
             </form>
         </div>
