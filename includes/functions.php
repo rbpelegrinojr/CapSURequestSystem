@@ -106,16 +106,16 @@ function get_stats() {
 
 function fill_template($template_content, $request_data, $additional_data = []) {
     $replacements = [
-        '{{requester_name}}'       => htmlspecialchars($request_data['requester_name'] ?? ''),
-        '{{requester_email}}'      => htmlspecialchars($request_data['requester_email'] ?? ''),
-        '{{requester_phone}}'      => htmlspecialchars($request_data['requester_phone'] ?? ''),
-        '{{requester_department}}' => htmlspecialchars($request_data['requester_department'] ?? ''),
-        '{{requester_position}}'   => htmlspecialchars($request_data['requester_position'] ?? ''),
-        '{{purpose}}'              => htmlspecialchars($request_data['purpose'] ?? ''),
-        '{{tracking_number}}'      => htmlspecialchars($request_data['tracking_number'] ?? ''),
-        '{{submitted_at}}'         => format_date($request_data['submitted_at'] ?? ''),
-        '{{current_date}}'         => date('F d, Y'),
-        '{{type_name}}'            => htmlspecialchars($request_data['type_name'] ?? ''),
+        'requester_name'       => htmlspecialchars($request_data['requester_name'] ?? ''),
+        'requester_email'      => htmlspecialchars($request_data['requester_email'] ?? ''),
+        'requester_phone'      => htmlspecialchars($request_data['requester_phone'] ?? ''),
+        'requester_department' => htmlspecialchars($request_data['requester_department'] ?? ''),
+        'requester_position'   => htmlspecialchars($request_data['requester_position'] ?? ''),
+        'purpose'              => htmlspecialchars($request_data['purpose'] ?? ''),
+        'tracking_number'      => htmlspecialchars($request_data['tracking_number'] ?? ''),
+        'submitted_at'         => format_date($request_data['submitted_at'] ?? ''),
+        'current_date'         => date('F d, Y'),
+        'type_name'            => htmlspecialchars($request_data['type_name'] ?? ''),
     ];
 
     if (is_string($additional_data)) {
@@ -123,10 +123,14 @@ function fill_template($template_content, $request_data, $additional_data = []) 
     }
 
     foreach ((array)$additional_data as $key => $value) {
-        $replacements['{{' . $key . '}}'] = htmlspecialchars((string)$value);
+        $replacements[trim($key)] = htmlspecialchars((string)$value);
     }
 
-    return str_replace(array_keys($replacements), array_values($replacements), $template_content);
+    // Support both {{ name }} (with spaces) and {{name}} (without spaces)
+    return preg_replace_callback('/\{\{\s*([^}]+?)\s*\}\}/', function ($m) use ($replacements) {
+        $key = trim($m[1]);
+        return array_key_exists($key, $replacements) ? $replacements[$key] : $m[0];
+    }, $template_content);
 }
 
 function get_request_with_type($id) {
