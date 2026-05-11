@@ -1,6 +1,7 @@
 <?php
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
 $uni_name = get_setting('university_name') ?: 'Capiz State University';
+$uni_logo = get_setting('university_logo');
 
 $nav_links = [
     ['href' => 'dashboard',      'icon' => 'bi-speedometer2',         'label' => 'Dashboard'],
@@ -21,7 +22,11 @@ try {
 ?>
 <aside class="admin-sidebar" id="adminSidebar">
     <div class="sidebar-brand">
-        <div class="brand-logo">CS</div>
+        <div class="brand-logo">
+            <?php if (!empty($uni_logo)): ?>
+            <img src="../<?= htmlspecialchars($uni_logo) ?>" alt="<?= htmlspecialchars($uni_name) ?> Logo" class="brand-logo-img brand-logo-img--square">
+            <?php else: ?>CS<?php endif; ?>
+        </div>
         <h6><?= htmlspecialchars($uni_name) ?></h6>
         <small>Admin Panel</small>
     </div>

@@ -670,6 +670,24 @@ body {
     margin-bottom: 28px;
 }
 
+/* ===== BRAND LOGO IMAGE ===== */
+.brand-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.brand-logo-img--square {
+    border-radius: 8px;
+}
+
+.brand-logo-img--header {
+    height: 36px;
+    width: 36px;
+    border-radius: 6px;
+}
+
 /* ===== PRINT STYLES ===== */
 @media print {
     .admin-sidebar, .admin-header, .no-print { display: none !important; }
