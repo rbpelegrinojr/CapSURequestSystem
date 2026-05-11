@@ -107,7 +107,7 @@ function get_stats() {
 
 function fill_template($template_content, $request_data, $additional_data = []) {
     $sex = $request_data['requester_sex'] ?? '';
-    $salutation = ($sex === 'Male') ? 'Mr' : (($sex === 'Female') ? 'Ms' : '');
+    $salutation = ($sex === 'Male') ? 'MR.' : (($sex === 'Female') ? 'Ms' : '');
     $replacements = [
         'requester_name'       => htmlspecialchars($request_data['requester_name'] ?? ''),
         'requester_firstname'  => htmlspecialchars($request_data['requester_firstname'] ?? ''),
@@ -174,7 +174,7 @@ function sanitize_html_output($str) {
  */
 function build_template_replacements($request_data, $additional_data = []) {
     $sex = $request_data['requester_sex'] ?? '';
-    $salutation = ($sex === 'Male') ? 'Mr' : (($sex === 'Female') ? 'Ms' : '');
+    $salutation = ($sex === 'Male') ? 'MR.' : (($sex === 'Female') ? 'Ms' : '');
     $replacements = [
         'requester_name'       => $request_data['requester_name'] ?? '',
         'requester_firstname'  => $request_data['requester_firstname'] ?? '',
