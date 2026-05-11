@@ -185,7 +185,7 @@ $uni_logo    = get_setting('university_logo');
                 <h6>Quick Links</h6>
                 <p><a href="index"><i class="bi bi-chevron-right me-1"></i>Home</a></p>
                 <p><a href="track_request"><i class="bi bi-chevron-right me-1"></i>Track Request</a></p>
-                <p><a href="admin/index"><i class="bi bi-chevron-right me-1"></i>Admin Portal</a></p>
+                <!-- <p><a href="admin/index"><i class="bi bi-chevron-right me-1"></i>Admin Portal</a></p> -->
             </div>
             <div class="col-lg-5">
                 <h6>Available Documents</h6>
