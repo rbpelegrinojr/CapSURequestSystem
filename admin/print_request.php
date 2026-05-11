@@ -23,8 +23,6 @@ $stmt = $db->prepare('SELECT * FROM document_templates WHERE request_type_id = ?
 $stmt->execute([$request['request_type_id']]);
 $template = $stmt->fetch();
 
-$letterhead  = get_setting('letterhead_html') ?: '';
-$global_footer = get_setting('footer_html') ?: '';
 $uni_name    = get_setting('university_name') ?: 'Capiz State University';
 $uni_address = get_setting('university_address') ?: '';
 
@@ -32,9 +30,6 @@ $template_content = $template['template_content'] ?? '';
 
 // Fill template placeholders
 $filled_content = fill_template($template_content, $request, $additional_data);
-
-// Signatories
-$signatories = get_active_signatories();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -188,13 +183,9 @@ $signatories = get_active_signatories();
     <?php else: ?>
         <!-- Fallback: no HTML template configured — render document from request data -->
         <div class="doc-header">
-            <?php if ($letterhead): ?>
-                <?= $letterhead ?>
-            <?php else: ?>
-                <h2><?= htmlspecialchars($uni_name) ?></h2>
-                <p><?= htmlspecialchars($uni_address) ?></p>
-                <div class="divider"></div>
-            <?php endif; ?>
+            <h2><?= htmlspecialchars($uni_name) ?></h2>
+            <p><?= htmlspecialchars($uni_address) ?></p>
+            <div class="divider"></div>
         </div>
         <div class="doc-title">
             <h3><?= htmlspecialchars($request['type_name']) ?></h3>
@@ -239,26 +230,6 @@ $signatories = get_active_signatories();
             </table>
             <?php endif; ?>
         </div>
-    <?php endif; ?>
-
-    <!-- Signatory Section -->
-    <?php if (!empty($signatories)): ?>
-    <div class="signatory-section">
-        <table style="width:100%;margin-top:40pt;">
-            <tr>
-                <?php foreach ($signatories as $sig): ?>
-                <td style="text-align:center;width:<?= round(100 / count($signatories)) ?>%;padding:0 10pt;">
-                    <div style="margin-top:30pt;">
-                        <div style="border-top:1px solid #000;padding-top:6pt;">
-                            <strong style="font-size:11pt;"><?= htmlspecialchars($sig['name']) ?></strong><br>
-                            <span style="font-size:10pt;"><?= htmlspecialchars($sig['title']) ?></span>
-                        </div>
-                    </div>
-                </td>
-                <?php endforeach; ?>
-            </tr>
-        </table>
-    </div>
     <?php endif; ?>
 
     <!-- Tracking Info -->

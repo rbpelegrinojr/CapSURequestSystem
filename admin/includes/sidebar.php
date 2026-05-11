@@ -3,12 +3,12 @@ $current_page = basename($_SERVER['PHP_SELF']);
 $uni_name = get_setting('university_name') ?: 'Capiz State University';
 
 $nav_links = [
-    ['href' => 'dashboard.php',     'icon' => 'bi-speedometer2',      'label' => 'Dashboard'],
-    ['href' => 'requests.php',       'icon' => 'bi-inbox',              'label' => 'All Requests'],
-    ['href' => 'templates.php',      'icon' => 'bi-file-earmark-richtext','label' => 'Document Templates'],
-    ['href' => 'signatories.php',    'icon' => 'bi-pen',                'label' => 'Signatories'],
-    ['href' => 'reports.php',        'icon' => 'bi-bar-chart-line',     'label' => 'Reports'],
-    ['href' => 'settings.php',       'icon' => 'bi-gear',               'label' => 'Settings'],
+    ['href' => 'dashboard.php',      'icon' => 'bi-speedometer2',         'label' => 'Dashboard'],
+    ['href' => 'requests.php',        'icon' => 'bi-inbox',                 'label' => 'All Requests'],
+    ['href' => 'request_types.php',   'icon' => 'bi-list-task',             'label' => 'Request Types'],
+    ['href' => 'templates.php',       'icon' => 'bi-file-earmark-richtext', 'label' => 'Document Templates'],
+    ['href' => 'reports.php',         'icon' => 'bi-bar-chart-line',        'label' => 'Reports'],
+    ['href' => 'settings.php',        'icon' => 'bi-gear',                  'label' => 'Settings'],
 ];
 
 // Count pending for badge
