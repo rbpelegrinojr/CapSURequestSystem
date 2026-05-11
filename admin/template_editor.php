@@ -608,7 +608,7 @@ function previewTemplate() {
         .replace(/\{\{\s*requester_department\s*\}\}/g, 'College of Engineering')
         .replace(/\{\{\s*purpose\s*\}\}/g, 'For loan application')
         .replace(/\{\{\s*tracking_number\s*\}\}/g, 'CAPSU-20240101-XXXXX')
-        .replace(/\{\{\s*current_date\s*\}\}/g, new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}))
+        .replace(/\{\{\s*current_date\s*\}\}/g, (() => { const d = new Date(); const day = d.getDate(); const ord = (day % 10 === 1 && day !== 11) ? 'st' : (day % 10 === 2 && day !== 12) ? 'nd' : (day % 10 === 3 && day !== 13) ? 'rd' : 'th'; return day + '<sup>' + ord + '</sup> day of ' + d.toLocaleDateString('en-US', {month:'long'}) + ', ' + d.getFullYear(); })())
         .replace(/\{\{\s*[^}]+?\s*\}\}/g, '[Sample Data]');
 
     document.getElementById('previewContent').innerHTML = content;

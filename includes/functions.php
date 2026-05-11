@@ -121,7 +121,7 @@ function fill_template($template_content, $request_data, $additional_data = []) 
         'purpose'              => htmlspecialchars($request_data['purpose'] ?? ''),
         'tracking_number'      => htmlspecialchars($request_data['tracking_number'] ?? ''),
         'submitted_at'         => format_date($request_data['submitted_at'] ?? ''),
-        'current_date'         => date('F d, Y'),
+        'current_date'         => date('jS \d\a\y \o\f F, Y'),
         'type_name'            => htmlspecialchars($request_data['type_name'] ?? ''),
     ];
 
@@ -188,7 +188,7 @@ function build_template_replacements($request_data, $additional_data = []) {
         'purpose'              => $request_data['purpose'] ?? '',
         'tracking_number'      => $request_data['tracking_number'] ?? '',
         'submitted_at'         => format_date($request_data['submitted_at'] ?? ''),
-        'current_date'         => date('F d, Y'),
+        'current_date'         => date('jS \d\a\y \o\f F, Y'),
         'type_name'            => $request_data['type_name'] ?? '',
     ];
 
