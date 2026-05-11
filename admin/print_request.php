@@ -260,7 +260,7 @@ $signatories = get_active_signatories();
 window.addEventListener('load', function() {
     setTimeout(function() {
         window.print();
-    }, 800);
+    }, 400);
 });
 </script>
 </body>
