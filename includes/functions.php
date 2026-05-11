@@ -209,15 +209,22 @@ function build_template_replacements($request_data, $additional_data = []) {
  * superscript.  Only handles the common case where the placeholder lives entirely
  * within one <w:r>/<w:t> element; the generic replacement in fill_template_for_xml
  * acts as a plain-text fallback for the (rare) split-run case.
+ *
+ * Note on the delimiter pattern \{\{\s*current_date\s*\}\}: within a single <w:t>
+ * element there are no XML tags — only plain text — so \s* is sufficient to handle
+ * spaces between the braces and the key.  When the {{ or }} delimiters themselves
+ * span different <w:t> elements (cross-run split), this function cannot match; the
+ * generic pattern in fill_template_for_xml (which uses \{[^{}]*\{…\}[^{}]*\}) will
+ * catch that case and replace the date as plain text.
  */
 function replace_date_placeholder_with_superscript($xml, $date_str) {
-    // Match a full <w:r> whose <w:t> contains {{current_date}}, capturing:
+    // Match a full <w:r> whose <w:t> contains {{current_date}} or {{ current_date }}, capturing:
     //   $m[1] – optional attributes on <w:r>
     //   $m[2] – full <w:rPr>…</w:rPr> block (empty string when absent)
     //   $m[3] – attributes on <w:t> (e.g. xml:space="preserve")
     //   $m[4] – text before the placeholder (already XML-encoded)
     //   $m[5] – text after the placeholder  (already XML-encoded)
-    $pattern = '/<w:r(\s[^>]*)?>(<w:rPr>[\s\S]*?<\/w:rPr>)?\s*<w:t([^>]*?)>(.*?)\{\{current_date\}\}(.*?)<\/w:t>\s*<\/w:r>/s';
+    $pattern = '/<w:r(\s[^>]*)?>(<w:rPr>[\s\S]*?<\/w:rPr>)?\s*<w:t([^>]*?)>(.*?)\{\{\s*current_date\s*\}\}(.*?)<\/w:t>\s*<\/w:r>/s';
 
     return preg_replace_callback($pattern, function ($m) use ($date_str) {
         $r_attr = $m[1];          // may be empty
@@ -262,15 +269,24 @@ function replace_date_placeholder_with_superscript($xml, $date_str) {
 
 /**
  * Fill a Word XML part (document.xml, header*.xml, footer*.xml) with request data.
- * Values are XML-escaped. Handles the common Word behaviour of splitting a
- * {{placeholder}} across multiple <w:r> runs: since XML tag names and attributes
- * cannot contain { or }, the pattern [^{}]* safely spans both plain text and any
- * XML markup that may appear inside the braces.
+ * Values are XML-escaped. Handles two common Word behaviours:
+ *
+ * 1. A placeholder key split across multiple <w:r> runs, e.g. {{requester_ in one
+ *    run and name}} in the next.  Since XML tag names and attributes cannot contain
+ *    { or }, [^{}]* safely spans both plain text and any XML markup between the
+ *    opening {{ and closing }}.
+ *
+ * 2. The {{ or }} delimiter characters themselves split across runs.  This happens
+ *    most often when the user writes placeholders with spaces (e.g. {{ key }}) and
+ *    Word places a run boundary at the space, so the two { or } chars end up in
+ *    different <w:t> elements.  The outer \{[^{}]*\{ / \}[^{}]*\} patterns allow
+ *    any non-brace content (XML closing/opening tags, whitespace) between the two
+ *    delimiter characters.
  */
 function fill_template_for_xml($xml_content, $request_data, $additional_data = []) {
     $replacements = build_template_replacements($request_data, $additional_data);
 
-    // Replace {{current_date}} with proper superscript Word XML when the placeholder
+    // Replace {{current_date}} (or {{ current_date }} with spaces) with proper superscript Word XML when the placeholder
     // is within a single <w:r> run (the typical case).  The key is intentionally
     // kept in $replacements so the generic loop below can still handle the (common)
     // case where Word has split the placeholder across multiple runs – in that
@@ -286,7 +302,16 @@ function fill_template_for_xml($xml_content, $request_data, $additional_data = [
     // runs (e.g. {{requester_ in one <w:r> and name}} in the next). Strip any XML
     // tags from the captured inner text to recover the plain-text key, then replace
     // the entire matched span (including embedded XML) with the escaped value.
-    return preg_replace_callback('/\{\{([^{}]*)\}\}/s', function ($m) use ($replacements) {
+    //
+    // The outer \{[^{}]*\{ and \}[^{}]*\} patterns (instead of the simpler \{\{ /
+    // \}\}) handle a second common Word behaviour: when a placeholder is written
+    // with spaces – e.g. {{ requester_name }} – Word sometimes splits runs at the
+    // space boundary so that the two { characters end up in different <w:r>/<w:t>
+    // elements. In the raw XML string the two { chars are then separated by XML
+    // closing/opening tags (e.g. {</w:t></w:r><w:r><w:t>{). Since XML tag
+    // characters are never { or }, [^{}]* bridges that gap and lets the pattern
+    // match regardless. The same applies to the closing }} delimiter.
+    return preg_replace_callback('/\{[^{}]*\{([^{}]*)\}[^{}]*\}/s', function ($m) use ($replacements) {
         $key = trim(preg_replace('/<[^>]+>/', '', $m[1]));
         if (array_key_exists($key, $replacements)) {
             return htmlspecialchars($replacements[$key], ENT_XML1 | ENT_COMPAT, 'UTF-8');
