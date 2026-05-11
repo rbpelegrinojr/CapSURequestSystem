@@ -8,8 +8,10 @@ if (is_admin_logged_in()) {
 }
 
 $db = get_db();
-$error   = '';
-$success = '';
+$error        = '';
+$error_link   = ''; // URL for "try again" link appended to $error
+$error_link_text = '';
+$success      = '';
 $uni_name = get_setting('university_name') ?: 'Capiz State University';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -18,8 +20,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $confirm_pass = $_POST['confirm_password'] ?? '';
     $admin_id     = isset($_SESSION['otp_admin_id']) ? (int)$_SESSION['otp_admin_id'] : 0;
 
-    if (!$admin_id) {
-        $error = 'Session expired. Please <a href="forgot_password" class="alert-link">request a new OTP</a>.';
+    if ($admin_id <= 0) {
+        $error           = 'Session expired. Please request a new OTP.';
+        $error_link      = 'forgot_password';
+        $error_link_text = 'Request a new OTP';
     } elseif (empty($otp) || empty($new_password) || empty($confirm_pass)) {
         $error = 'All fields are required.';
     } elseif (!preg_match('/^\d{6}$/', $otp)) {
@@ -39,7 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $reset_row = $stmt->fetch();
 
         if (!$reset_row) {
-            $error = 'Invalid or expired OTP. Please <a href="forgot_password" class="alert-link">request a new one</a>.';
+            $error           = 'Invalid or expired OTP.';
+            $error_link      = 'forgot_password';
+            $error_link_text = 'Request a new one';
         } else {
             // Mark OTP as used
             $stmt = $db->prepare('UPDATE admin_password_resets SET used = 1 WHERE id = ?');
@@ -79,7 +85,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <?php if ($error): ?>
         <div class="alert alert-danger py-2 small" role="alert">
-            <i class="bi bi-exclamation-triangle me-1"></i><?= $error ?>
+            <i class="bi bi-exclamation-triangle me-1"></i><?= htmlspecialchars($error) ?>
+            <?php if ($error_link): ?>
+            <a href="<?= htmlspecialchars($error_link) ?>" class="alert-link"><?= htmlspecialchars($error_link_text) ?></a>.
+            <?php endif; ?>
         </div>
         <?php endif; ?>
 

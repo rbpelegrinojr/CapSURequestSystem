@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$admin['id']]);
 
             // Generate a 6-digit OTP
-            $otp        = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $otp        = (string)random_int(100000, 999999);
             $expires_at = date('Y-m-d H:i:s', time() + 900); // 15 minutes
 
             $stmt = $db->prepare('INSERT INTO admin_password_resets (admin_id, otp, expires_at) VALUES (?, ?, ?)');
@@ -52,10 +52,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ";
             $sent = send_system_email($admin['email'], $admin['name'], 'Admin Password Reset OTP — ' . $uni_name, $body);
 
-            // Store admin_id in session so the verify step can use it
-            $_SESSION['otp_admin_id'] = $admin['id'];
-
-            $success = 'An OTP has been sent to ' . htmlspecialchars($masked_email) . '. It expires in 15 minutes.';
+            if (!$sent) {
+                // Roll back the OTP record so a retry is possible
+                $stmt = $db->prepare('DELETE FROM admin_password_resets WHERE id = LAST_INSERT_ID()');
+                $stmt->execute();
+                $error = 'Could not send the OTP email. Please check the mail configuration and try again.';
+            } else {
+                // Store admin_id in session so the verify step can use it
+                $_SESSION['otp_admin_id'] = $admin['id'];
+                $success = 'An OTP has been sent to ' . htmlspecialchars($masked_email) . '. It expires in 15 minutes.';
+            }
         }
     }
 }
@@ -68,8 +74,11 @@ function mask_email($email) {
     if (count($parts) !== 2) return '***';
     $local  = $parts[0];
     $domain = $parts[1];
-    $visible = substr($local, 0, min(2, strlen($local)));
-    return $visible . str_repeat('*', max(1, strlen($local) - 2)) . '@' . $domain;
+    if (strlen($local) <= 2) {
+        return str_repeat('*', strlen($local)) . '@' . $domain;
+    }
+    $visible = substr($local, 0, 2);
+    return $visible . str_repeat('*', strlen($local) - 2) . '@' . $domain;
 }
 ?>
 <!DOCTYPE html>
