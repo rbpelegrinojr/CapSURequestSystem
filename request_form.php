@@ -122,12 +122,34 @@ $icons = [
                         <p class="text-muted small mb-4">Please provide your accurate personal details.</p>
 
                         <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="requester_firstname"
+                                       placeholder="e.g. Juan"
+                                       value="<?= htmlspecialchars($old_input['requester_firstname'] ?? '') ?>"
+                                       required maxlength="75">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Middle Name</label>
+                                <input type="text" class="form-control" name="requester_middlename"
+                                       placeholder="e.g. Santos (auto-initialed)"
+                                       value="<?= htmlspecialchars($old_input['requester_middlename'] ?? '') ?>"
+                                       maxlength="75">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="requester_lastname"
+                                       placeholder="e.g. Dela Cruz"
+                                       value="<?= htmlspecialchars($old_input['requester_lastname'] ?? '') ?>"
+                                       required maxlength="75">
+                            </div>
                             <div class="col-md-6">
-                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="requester_name"
-                                       placeholder="Last Name, First Name M.I."
-                                       value="<?= htmlspecialchars($old_input['requester_name'] ?? '') ?>"
-                                       required maxlength="150">
+                                <label class="form-label">Sex <span class="text-danger">*</span></label>
+                                <select class="form-select" name="requester_sex" required>
+                                    <option value="">— Select —</option>
+                                    <option value="Male" <?= (($old_input['requester_sex'] ?? '') === 'Male') ? 'selected' : '' ?>>Male</option>
+                                    <option value="Female" <?= (($old_input['requester_sex'] ?? '') === 'Female') ? 'selected' : '' ?>>Female</option>
+                                </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Email Address <span class="text-danger">*</span></label>

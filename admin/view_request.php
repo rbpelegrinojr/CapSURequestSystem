@@ -88,6 +88,12 @@ $error_msg   = $_GET['error'] ?? '';
                         <div class="detail-label">Full Name</div>
                         <div class="detail-val"><strong><?= htmlspecialchars($request['requester_name']) ?></strong></div>
                     </div>
+                    <?php if (!empty($request['requester_sex'])): ?>
+                    <div class="detail-row">
+                        <div class="detail-label">Sex</div>
+                        <div class="detail-val"><?= htmlspecialchars($request['requester_sex']) ?></div>
+                    </div>
+                    <?php endif; ?>
                     <div class="detail-row">
                         <div class="detail-label">Email</div>
                         <div class="detail-val"><a href="mailto:<?= htmlspecialchars($request['requester_email']) ?>"><?= htmlspecialchars($request['requester_email']) ?></a></div>

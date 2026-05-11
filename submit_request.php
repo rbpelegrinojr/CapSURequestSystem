@@ -10,7 +10,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Validate CSRF-like: ensure required fields exist
 $type_id    = filter_input(INPUT_POST, 'request_type_id', FILTER_VALIDATE_INT);
 $type_code  = strtoupper(trim($_POST['type_code'] ?? ''));
-$name       = trim($_POST['requester_name'] ?? '');
+$firstname  = trim($_POST['requester_firstname'] ?? '');
+$middlename = trim($_POST['requester_middlename'] ?? '');
+$lastname   = trim($_POST['requester_lastname'] ?? '');
+$sex        = trim($_POST['requester_sex'] ?? '');
 $email      = trim($_POST['requester_email'] ?? '');
 $phone      = trim($_POST['requester_phone'] ?? '');
 $department = trim($_POST['requester_department'] ?? '');
@@ -18,10 +21,30 @@ $position   = trim($_POST['requester_position'] ?? '');
 $purpose    = trim($_POST['purpose'] ?? '');
 $extra      = $_POST['extra'] ?? [];
 
+// Convert middle name to initial (first letter + dot) if longer than one character
+$middle_initial = '';
+if ($middlename !== '') {
+    $clean = rtrim($middlename, '. ');
+    if (mb_strlen($clean) > 1) {
+        $middle_initial = mb_strtoupper(mb_substr($clean, 0, 1)) . '.';
+    } else {
+        $middle_initial = mb_strtoupper($clean) . '.';
+    }
+}
+
+// Compose full name: "Firstname MI. Lastname"
+$name_parts = array_filter([$firstname, $middle_initial, $lastname]);
+$name = implode(' ', $name_parts);
+
+// Salutation derived from sex
+$salutation = ($sex === 'Male') ? 'Mr' : (($sex === 'Female') ? 'Ms' : '');
+
 $errors = [];
 
 if (!$type_id) $errors[] = 'Invalid request type.';
-if (empty($name)) $errors[] = 'Full name is required.';
+if (empty($firstname)) $errors[] = 'First name is required.';
+if (empty($lastname)) $errors[] = 'Last name is required.';
+if (empty($sex)) $errors[] = 'Sex is required.';
 if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'A valid email address is required.';
 if (empty($department)) $errors[] = 'Department is required.';
 if (empty($position)) $errors[] = 'Position is required.';
@@ -61,14 +84,20 @@ foreach ($extra as $k => $v) {
 $tracking = generate_tracking_number();
 
 $stmt = $db->prepare(
-    'INSERT INTO requests (tracking_number, request_type_id, requester_name, requester_email,
-     requester_phone, requester_department, requester_position, purpose, additional_data, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO requests (tracking_number, request_type_id, requester_name,
+     requester_firstname, requester_middlename, requester_lastname, requester_sex,
+     requester_email, requester_phone, requester_department, requester_position,
+     purpose, additional_data, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
 $stmt->execute([
     $tracking,
     $type_id,
     $name,
+    $firstname,
+    $middle_initial,
+    $lastname,
+    $sex,
     $email,
     $phone,
     $department,
