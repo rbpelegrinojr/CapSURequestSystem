@@ -213,7 +213,7 @@ function fill_template_for_xml($xml_content, $request_data, $additional_data = [
                 // More than one w:t in this run — join them into the first one
                 $joined = implode('', $hits[1]);
                 // Replace all w:t elements with a single one preserving xml:space
-                $run_inner = preg_replace('/<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/s', '', $run_inner, -1, $count);
+                $run_inner = preg_replace('/<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/s', '', $run_inner, -1);
                 $run_inner .= '<w:t xml:space="preserve">' . $joined . '</w:t>';
             }
             return $m[1] . $run_inner . $m[3];

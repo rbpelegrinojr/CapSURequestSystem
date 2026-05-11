@@ -57,9 +57,7 @@ if (strtolower(pathinfo($file['name'], PATHINFO_EXTENSION)) !== 'docx') {
 // Validate it is a real DOCX (ZIP containing word/document.xml)
 $zip = new ZipArchive();
 if ($zip->open($file['tmp_name']) !== true || $zip->locateName('word/document.xml') === false) {
-    if ($zip instanceof ZipArchive) {
-        @$zip->close();
-    }
+    $zip->close();
     header('Location: ' . $redirect . '&error=invalid_docx');
     exit;
 }
