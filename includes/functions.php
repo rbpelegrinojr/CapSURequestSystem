@@ -206,18 +206,24 @@ function build_template_replacements($request_data, $additional_data = []) {
 /**
  * Fill a Word XML part (document.xml, header*.xml, footer*.xml) with request data.
  * Values are XML-escaped. Handles the common Word behaviour of splitting a
- * {{placeholder}} across multiple <w:r> runs: since XML tag names and attributes
- * cannot contain { or }, the pattern [^{}]* safely spans both plain text and any
- * XML markup that may appear inside the braces.
+ * {{placeholder}} across multiple <w:r> runs in two ways:
+ *   1. The text between {{ and }} is split: [^{}]* spans XML markup inside the braces.
+ *   2. The {{ or }} delimiters themselves are split across runs (e.g. the first {
+ *      ends one <w:r> and the second { starts the next).  The opening pattern
+ *      \{(?:\s*<[^>]*>\s*)* allows any number of XML tags between the two {
+ *      characters, and likewise for the closing }}.
  */
 function fill_template_for_xml($xml_content, $request_data, $additional_data = []) {
     $replacements = build_template_replacements($request_data, $additional_data);
 
-    // Match {{ ... }} even when Word has split the placeholder text across several
-    // runs (e.g. {{requester_ in one <w:r> and name}} in the next). Strip any XML
-    // tags from the captured inner text to recover the plain-text key, then replace
-    // the entire matched span (including embedded XML) with the escaped value.
-    return preg_replace_callback('/\{\{([^{}]*)\}\}/s', function ($m) use ($replacements) {
+    // Pattern breakdown:
+    //   \{(?:\s*<[^>]*>\s*)*  – first { of {{ followed by optional XML tags
+    //   \{                    – second { of {{
+    //   ([^{}]*)              – placeholder key, may contain embedded XML tags
+    //   \}                    – first } of }}
+    //   (?:\s*<[^>]*>\s*)*    – optional XML tags between the two }}
+    //   \}                    – second } of }}
+    return preg_replace_callback('/\{(?:\s*<[^>]*>\s*)*\{([^{}]*)\}(?:\s*<[^>]*>\s*)*\}/s', function ($m) use ($replacements) {
         $key = trim(preg_replace('/<[^>]+>/', '', $m[1]));
         if (array_key_exists($key, $replacements)) {
             return htmlspecialchars($replacements[$key], ENT_XML1 | ENT_COMPAT, 'UTF-8');
