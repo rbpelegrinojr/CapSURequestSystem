@@ -271,11 +271,15 @@ function fill_template_for_xml($xml_content, $request_data, $additional_data = [
     $replacements = build_template_replacements($request_data, $additional_data);
 
     // Replace {{current_date}} with proper superscript Word XML when the placeholder
-    // is within a single <w:r> run (the typical case).  Unset the key so the generic
-    // loop below does not clobber it with plain text.
+    // is within a single <w:r> run (the typical case).  The key is intentionally
+    // kept in $replacements so the generic loop below can still handle the (common)
+    // case where Word has split the placeholder across multiple runs – in that
+    // situation the superscript regex does not match, but the generic fallback will
+    // replace the split span with a plain-text date.  There is no double-replacement
+    // risk: once replace_date_placeholder_with_superscript succeeds the literal
+    // {{current_date}} text is gone from the XML and the generic loop won't find it.
     if (isset($replacements['current_date'])) {
         $xml_content = replace_date_placeholder_with_superscript($xml_content, $replacements['current_date']);
-        unset($replacements['current_date']);
     }
 
     // Match {{ ... }} even when Word has split the placeholder text across several
