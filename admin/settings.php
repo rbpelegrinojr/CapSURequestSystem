@@ -181,23 +181,40 @@ foreach ($settings_rows as $row) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <?php if ($active_tab === 'letterhead'): ?>
 <script>
+const RICH_FONTS =
+    'Arial=arial,helvetica,sans-serif;' +
+    'Calibri=calibri,sans-serif;' +
+    'Cambria=cambria,georgia,serif;' +
+    'Georgia=georgia,palatino,serif;' +
+    'Times New Roman=times new roman,times,serif;' +
+    'Verdana=verdana,geneva,sans-serif';
+const RICH_SIZES = '8pt 9pt 10pt 11pt 12pt 14pt 16pt 18pt 20pt 24pt 28pt 36pt';
+
 tinymce.init({
     selector: '#letterhead_html',
-    plugins: 'code image',
-    toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | image | code',
-    height: 220,
-    menubar: false,
+    plugins: 'advlist autolink lists link image charmap code table',
+    menubar: 'format table',
+    toolbar: 'fontfamily fontsize | bold italic underline | forecolor backcolor | alignleft aligncenter alignright | bullist numlist | table image | code',
+    toolbar_mode: 'wrap',
+    height: 260,
     promotion: false,
     branding: false,
+    font_family_formats: RICH_FONTS,
+    font_size_formats: RICH_SIZES,
+    content_style: 'body { font-family: "Times New Roman", serif; font-size: 12pt; }',
 });
 tinymce.init({
     selector: '#footer_html',
-    plugins: 'code',
-    toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-    height: 160,
-    menubar: false,
+    plugins: 'advlist autolink lists link image charmap code',
+    menubar: 'format',
+    toolbar: 'fontfamily fontsize | bold italic underline | forecolor backcolor | alignleft aligncenter alignright | bullist numlist | image | code',
+    toolbar_mode: 'wrap',
+    height: 200,
     promotion: false,
     branding: false,
+    font_family_formats: RICH_FONTS,
+    font_size_formats: RICH_SIZES,
+    content_style: 'body { font-family: "Times New Roman", serif; font-size: 12pt; }',
 });
 document.getElementById('letterheadForm').addEventListener('submit', function() {
     tinymce.triggerSave();

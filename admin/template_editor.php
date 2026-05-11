@@ -255,36 +255,97 @@ $form_fields = json_decode($request_type['form_fields'] ?? '[]', true) ?: [];
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script>
-// TinyMCE init
+// Shared TinyMCE font configuration
+const EDITOR_FONT_FAMILIES =
+    'Arial=arial,helvetica,sans-serif;' +
+    'Arial Black=arial black,gadget,sans-serif;' +
+    'Book Antiqua=book antiqua,palatino,serif;' +
+    'Calibri=calibri,sans-serif;' +
+    'Cambria=cambria,georgia,serif;' +
+    'Comic Sans MS=comic sans ms,cursive;' +
+    'Courier New=courier new,courier,monospace;' +
+    'Georgia=georgia,palatino,serif;' +
+    'Helvetica=helvetica,sans-serif;' +
+    'Impact=impact,charcoal,sans-serif;' +
+    'Tahoma=tahoma,arial,helvetica,sans-serif;' +
+    'Times New Roman=times new roman,times,serif;' +
+    'Trebuchet MS=trebuchet ms,helvetica,sans-serif;' +
+    'Verdana=verdana,geneva,sans-serif';
+const EDITOR_FONT_SIZES = '8pt 9pt 10pt 11pt 12pt 14pt 16pt 18pt 20pt 22pt 24pt 26pt 28pt 36pt 48pt 72pt';
+const EDITOR_FONT_SIZES_SMALL = '8pt 9pt 10pt 11pt 12pt 14pt 16pt 18pt 20pt 24pt';
+
+// TinyMCE init — Word-like document editor
 tinymce.init({
     selector: '#template_content',
-    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
-    toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link | code | help',
-    height: 400,
-    menubar: false,
+    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks visualchars code fullscreen insertdatetime media table pagebreak nonbreaking directionality charmap wordcount help',
+    menubar: 'edit view insert format table tools help',
+    toolbar: [
+        'undo redo | fontfamily fontsize | bold italic underline strikethrough | forecolor backcolor',
+        'alignleft aligncenter alignright alignjustify | bullist numlist | outdent indent | blockquote | subscript superscript',
+        'table link image charmap | pagebreak nonbreaking | searchreplace | code fullscreen'
+    ],
+    toolbar_mode: 'wrap',
+    height: 600,
     promotion: false,
     branding: false,
-    content_style: 'body { font-family: "Times New Roman", serif; font-size: 12pt; line-height: 1.8; }',
+    font_family_formats: EDITOR_FONT_FAMILIES,
+    font_size_formats: EDITOR_FONT_SIZES,
+    block_formats: 'Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Heading 4=h4; Heading 5=h5; Heading 6=h6; Preformatted=pre',
+    table_default_styles: {
+        'width': '100%',
+        'border-collapse': 'collapse',
+    },
+    table_default_attributes: {
+        border: '1',
+    },
+    content_style: [
+        'body {',
+        '  font-family: "Times New Roman", serif;',
+        '  font-size: 12pt;',
+        '  line-height: 1.8;',
+        '  margin: 40px auto;',
+        '  max-width: 816px;',
+        '  background: #fff;',
+        '  padding: 60px 72px;',
+        '  box-shadow: 0 0 0 1px #ddd;',
+        '}',
+        'table, td, th { border: 1px solid #999; padding: 4px 8px; }',
+    ].join(''),
+    setup: function(editor) {
+        editor.on('init', function() {
+            editor.getDoc().body.style.background = '#fff';
+        });
+    },
 });
 
+// Header editor — richer formatting for letterhead
 tinymce.init({
     selector: '#header_html',
-    plugins: 'code',
-    toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | image | code',
-    height: 180,
-    menubar: false,
+    plugins: 'advlist autolink lists link image charmap code table',
+    menubar: 'format table',
+    toolbar: 'fontfamily fontsize | bold italic underline | forecolor backcolor | alignleft aligncenter alignright | bullist numlist | table image | code',
+    toolbar_mode: 'wrap',
+    height: 220,
     promotion: false,
     branding: false,
+    font_family_formats: EDITOR_FONT_FAMILIES,
+    font_size_formats: EDITOR_FONT_SIZES_SMALL,
+    content_style: 'body { font-family: "Times New Roman", serif; font-size: 12pt; }',
 });
 
+// Footer editor — richer formatting
 tinymce.init({
     selector: '#footer_html',
-    plugins: 'code',
-    toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | code',
-    height: 150,
-    menubar: false,
+    plugins: 'advlist autolink lists link image charmap code',
+    menubar: 'format',
+    toolbar: 'fontfamily fontsize | bold italic underline | forecolor backcolor | alignleft aligncenter alignright | bullist numlist | image | code',
+    toolbar_mode: 'wrap',
+    height: 180,
     promotion: false,
     branding: false,
+    font_family_formats: EDITOR_FONT_FAMILIES,
+    font_size_formats: EDITOR_FONT_SIZES_SMALL,
+    content_style: 'body { font-family: "Times New Roman", serif; font-size: 12pt; }',
 });
 
 // SortableJS for layout sections
