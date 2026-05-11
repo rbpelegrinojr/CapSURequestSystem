@@ -204,6 +204,63 @@ function build_template_replacements($request_data, $additional_data = []) {
 }
 
 /**
+ * Replace the {{current_date}} placeholder inside a single Word <w:r> run with
+ * proper multi-run XML so that the ordinal suffix (st/nd/rd/th) is rendered as a
+ * superscript.  Only handles the common case where the placeholder lives entirely
+ * within one <w:r>/<w:t> element; the generic replacement in fill_template_for_xml
+ * acts as a plain-text fallback for the (rare) split-run case.
+ */
+function replace_date_placeholder_with_superscript($xml, $date_str) {
+    // Match a full <w:r> whose <w:t> contains {{current_date}}, capturing:
+    //   $m[1] – optional attributes on <w:r>
+    //   $m[2] – full <w:rPr>…</w:rPr> block (empty string when absent)
+    //   $m[3] – attributes on <w:t> (e.g. xml:space="preserve")
+    //   $m[4] – text before the placeholder (already XML-encoded)
+    //   $m[5] – text after the placeholder  (already XML-encoded)
+    $pattern = '/<w:r(\s[^>]*)?>(<w:rPr>[\s\S]*?<\/w:rPr>)?\s*<w:t([^>]*?)>(.*?)\{\{current_date\}\}(.*?)<\/w:t>\s*<\/w:r>/s';
+
+    return preg_replace_callback($pattern, function ($m) use ($date_str) {
+        $r_attr = $m[1];          // may be empty
+        $rPr    = $m[2];          // full <w:rPr>…</w:rPr> block or ''
+        $pre    = $m[4];          // already XML-encoded, keep as-is
+        $post   = $m[5];          // already XML-encoded, keep as-is
+
+        // Build the run-properties for the superscript run: inherit existing
+        // formatting and add <w:vertAlign w:val="superscript"/>.
+        if ($rPr !== '') {
+            $supRPr = preg_replace('/<\/w:rPr>\s*$/', '<w:vertAlign w:val="superscript"/></w:rPr>', $rPr);
+        } else {
+            $supRPr = '<w:rPr><w:vertAlign w:val="superscript"/></w:rPr>';
+        }
+
+        $open = '<w:r' . $r_attr . '>';
+
+        // Split "11th day of May, 2026" → day="11", ord="th", rest=" day of May, 2026".
+        // PHP date('S') always returns lowercase (st/nd/rd/th), so no i flag needed.
+        if (preg_match('/^(\d+)(st|nd|rd|th)(.*)$/', $date_str, $dp)) {
+            $day  = htmlspecialchars($dp[1], ENT_XML1 | ENT_COMPAT, 'UTF-8');
+            $ord  = htmlspecialchars($dp[2], ENT_XML1 | ENT_COMPAT, 'UTF-8');
+            $rest = htmlspecialchars($dp[3], ENT_XML1 | ENT_COMPAT, 'UTF-8');
+
+            $out = '';
+            if ($pre !== '') {
+                $out .= $open . $rPr . '<w:t xml:space="preserve">' . $pre . '</w:t></w:r>';
+            }
+            $out .= $open . $rPr    . '<w:t xml:space="preserve">' . $day . '</w:t></w:r>';
+            // xml:space="preserve" is intentionally omitted on the ordinal run:
+            // the ordinal ("th", "st", etc.) contains no leading/trailing whitespace.
+            $out .= $open . $supRPr . '<w:t>' . $ord . '</w:t></w:r>';
+            $out .= $open . $rPr    . '<w:t xml:space="preserve">' . $rest . $post . '</w:t></w:r>';
+            return $out;
+        }
+
+        // Fallback: no recognisable ordinal – plain text replacement.
+        $escaped = htmlspecialchars($date_str, ENT_XML1 | ENT_COMPAT, 'UTF-8');
+        return $open . $rPr . '<w:t xml:space="preserve">' . $pre . $escaped . $post . '</w:t></w:r>';
+    }, $xml);
+}
+
+/**
  * Fill a Word XML part (document.xml, header*.xml, footer*.xml) with request data.
  * Values are XML-escaped. Handles the common Word behaviour of splitting a
  * {{placeholder}} across multiple <w:r> runs: since XML tag names and attributes
@@ -212,6 +269,14 @@ function build_template_replacements($request_data, $additional_data = []) {
  */
 function fill_template_for_xml($xml_content, $request_data, $additional_data = []) {
     $replacements = build_template_replacements($request_data, $additional_data);
+
+    // Replace {{current_date}} with proper superscript Word XML when the placeholder
+    // is within a single <w:r> run (the typical case).  Unset the key so the generic
+    // loop below does not clobber it with plain text.
+    if (isset($replacements['current_date'])) {
+        $xml_content = replace_date_placeholder_with_superscript($xml_content, $replacements['current_date']);
+        unset($replacements['current_date']);
+    }
 
     // Match {{ ... }} even when Word has split the placeholder text across several
     // runs (e.g. {{requester_ in one <w:r> and name}} in the next). Strip any XML
