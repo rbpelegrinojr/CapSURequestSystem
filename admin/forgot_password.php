@@ -37,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt = $db->prepare('INSERT INTO admin_password_resets (admin_id, otp, expires_at) VALUES (?, ?, ?)');
             $stmt->execute([$admin['id'], $otp, $expires_at]);
+            $reset_id = (int)$db->lastInsertId();
 
             // Send OTP email
             $masked_email = mask_email($admin['email']);
@@ -54,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!$sent) {
                 // Roll back the OTP record so a retry is possible
-                $stmt = $db->prepare('DELETE FROM admin_password_resets WHERE id = LAST_INSERT_ID()');
-                $stmt->execute();
+                $stmt = $db->prepare('DELETE FROM admin_password_resets WHERE id = ?');
+                $stmt->execute([$reset_id]);
                 $error = 'Could not send the OTP email. Please check the mail configuration and try again.';
             } else {
                 // Store admin_id in session so the verify step can use it

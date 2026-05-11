@@ -12,15 +12,16 @@ $error        = '';
 $error_link   = ''; // URL for "try again" link appended to $error
 $error_link_text = '';
 $success      = '';
-$uni_name = get_setting('university_name') ?: 'Capiz State University';
+$uni_name  = get_setting('university_name') ?: 'Capiz State University';
+$admin_id  = isset($_SESSION['otp_admin_id']) ? (int)$_SESSION['otp_admin_id'] : 0;
+$has_session = $admin_id > 0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $otp          = trim($_POST['otp'] ?? '');
     $new_password = $_POST['new_password'] ?? '';
     $confirm_pass = $_POST['confirm_password'] ?? '';
-    $admin_id     = isset($_SESSION['otp_admin_id']) ? (int)$_SESSION['otp_admin_id'] : 0;
 
-    if ($admin_id <= 0) {
+    if (!$has_session) {
         $error           = 'Session expired. Please request a new OTP.';
         $error_link      = 'forgot_password';
         $error_link_text = 'Request a new OTP';
@@ -102,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </a>
         </div>
         <?php else: ?>
-        <?php if (!isset($_SESSION['otp_admin_id'])): ?>
+        <?php if (!$has_session): ?>
         <div class="alert alert-warning py-2 small" role="alert">
             <i class="bi bi-info-circle me-1"></i>
             No active OTP session. Please <a href="forgot_password" class="alert-link">request an OTP first</a>.
