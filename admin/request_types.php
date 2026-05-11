@@ -267,8 +267,7 @@ if ($edit_id) {
                             <input type="text" class="admin-form-control" name="code" id="codeInput"
                                    value="<?= htmlspecialchars($edit_type['code'] ?? '') ?>"
                                    placeholder="e.g. COE, SR, CA" required maxlength="20"
-                                   style="text-transform:uppercase;"
-                                   <?= ($edit_type && (int)($edit_type['is_active'] ?? 1) !== -99) ? '' : '' ?>>
+                                   style="text-transform:uppercase;">
                             <div class="form-text text-muted small">Uppercase letters/numbers only, up to 20 chars.</div>
                         </div>
                         <div class="mb-3">
