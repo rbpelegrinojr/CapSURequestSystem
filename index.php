@@ -57,9 +57,9 @@ $uni_logo    = get_setting('university_logo');
                 <li class="nav-item">
                     <a class="nav-link" href="track_request"><i class="bi bi-search me-1"></i>Track Request</a>
                 </li>
-                <li class="nav-item">
+                <!-- <li class="nav-item">
                     <a class="nav-link" href="admin/index"><i class="bi bi-person-lock me-1"></i>Admin</a>
-                </li>
+                </li> -->
             </ul>
         </div>
     </nav>
