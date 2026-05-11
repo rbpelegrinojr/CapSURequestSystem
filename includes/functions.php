@@ -217,7 +217,7 @@ function replace_date_placeholder_with_superscript($xml, $date_str) {
     //   $m[3] – attributes on <w:t> (e.g. xml:space="preserve")
     //   $m[4] – text before the placeholder (already XML-encoded)
     //   $m[5] – text after the placeholder  (already XML-encoded)
-    $pattern = '/<w:r(\s[^>]*)?>(<w:rPr>[\s\S]*?<\/w:rPr>)?\s*<w:t([^>]*?)>(.*?)\{\{current_date\}\}(.*?)<\/w:t>\s*<\/w:r>/s';
+    $pattern = '/<w:r(\s[^>]*)?>(<w:rPr>[\s\S]*?<\/w:rPr>)?\s*<w:t([^>]*?)>(.*?)\{\{\s*current_date\s*\}\}(.*?)<\/w:t>\s*<\/w:r>/s';
 
     return preg_replace_callback($pattern, function ($m) use ($date_str) {
         $r_attr = $m[1];          // may be empty
@@ -271,11 +271,12 @@ function fill_template_for_xml($xml_content, $request_data, $additional_data = [
     $replacements = build_template_replacements($request_data, $additional_data);
 
     // Replace {{current_date}} with proper superscript Word XML when the placeholder
-    // is within a single <w:r> run (the typical case).  Unset the key so the generic
-    // loop below does not clobber it with plain text.
+    // is within a single <w:r> run (the typical case).  The key is intentionally kept
+    // in $replacements so that the generic loop below acts as a plain-text fallback
+    // for any remaining occurrences (e.g. split runs or spaces in the placeholder)
+    // that were not handled by the superscript replacement.
     if (isset($replacements['current_date'])) {
         $xml_content = replace_date_placeholder_with_superscript($xml_content, $replacements['current_date']);
-        unset($replacements['current_date']);
     }
 
     // Match {{ ... }} even when Word has split the placeholder text across several
