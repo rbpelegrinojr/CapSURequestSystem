@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($_FILES['university_logo']['name'])) {
             $ext = strtolower(pathinfo($_FILES['university_logo']['name'], PATHINFO_EXTENSION));
             if (in_array($ext, ['jpg','jpeg','png','gif','svg'])) {
-                $upload_dir = __DIR__ . '/../../assets/uploads/';
+                $upload_dir = __DIR__ . '/../assets/uploads/';
                 if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
                 $filename = 'logo_' . time() . '.' . $ext;
                 if (move_uploaded_file($_FILES['university_logo']['tmp_name'], $upload_dir . $filename)) {
