@@ -211,13 +211,13 @@ function build_template_replacements($request_data, $additional_data = []) {
  * acts as a plain-text fallback for the (rare) split-run case.
  */
 function replace_date_placeholder_with_superscript($xml, $date_str) {
-    // Match a full <w:r> whose <w:t> contains {{current_date}}, capturing:
+    // Match a full <w:r> whose <w:t> contains {{current_date}} or {{ current_date }}, capturing:
     //   $m[1] – optional attributes on <w:r>
     //   $m[2] – full <w:rPr>…</w:rPr> block (empty string when absent)
     //   $m[3] – attributes on <w:t> (e.g. xml:space="preserve")
     //   $m[4] – text before the placeholder (already XML-encoded)
     //   $m[5] – text after the placeholder  (already XML-encoded)
-    $pattern = '/<w:r(\s[^>]*)?>(<w:rPr>[\s\S]*?<\/w:rPr>)?\s*<w:t([^>]*?)>(.*?)\{\{current_date\}\}(.*?)<\/w:t>\s*<\/w:r>/s';
+    $pattern = '/<w:r(\s[^>]*)?>(<w:rPr>[\s\S]*?<\/w:rPr>)?\s*<w:t([^>]*?)>(.*?)\{\{\s*current_date\s*\}\}(.*?)<\/w:t>\s*<\/w:r>/s';
 
     return preg_replace_callback($pattern, function ($m) use ($date_str) {
         $r_attr = $m[1];          // may be empty
@@ -270,7 +270,7 @@ function replace_date_placeholder_with_superscript($xml, $date_str) {
 function fill_template_for_xml($xml_content, $request_data, $additional_data = []) {
     $replacements = build_template_replacements($request_data, $additional_data);
 
-    // Replace {{current_date}} with proper superscript Word XML when the placeholder
+    // Replace {{current_date}} (or {{ current_date }} with spaces) with proper superscript Word XML when the placeholder
     // is within a single <w:r> run (the typical case).  The key is intentionally
     // kept in $replacements so the generic loop below can still handle the (common)
     // case where Word has split the placeholder across multiple runs – in that
