@@ -217,12 +217,12 @@ function fill_template_for_xml($xml_content, $request_data, $additional_data = [
     $replacements = build_template_replacements($request_data, $additional_data);
 
     // Pattern breakdown:
-    //   \{(?:\s*<[^>]*>\s*)*  – first { of {{ followed by optional XML tags
-    //   \{                    – second { of {{
+    //   \{(?:\s*<[^>]*>\s*)*  – opening brace, with optional XML tags before the second {
+    //   \{                    – second { completing {{
     //   ([^{}]*)              – placeholder key, may contain embedded XML tags
     //   \}                    – first } of }}
-    //   (?:\s*<[^>]*>\s*)*    – optional XML tags between the two }}
-    //   \}                    – second } of }}
+    //   (?:\s*<[^>]*>\s*)*    – optional XML tags after the first } and before the second }
+    //   \}                    – second } completing }}
     return preg_replace_callback('/\{(?:\s*<[^>]*>\s*)*\{([^{}]*)\}(?:\s*<[^>]*>\s*)*\}/s', function ($m) use ($replacements) {
         $key = trim(preg_replace('/<[^>]+>/', '', $m[1]));
         if (array_key_exists($key, $replacements)) {
