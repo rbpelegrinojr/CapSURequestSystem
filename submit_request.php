@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once __DIR__ . '/includes/functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -45,9 +46,9 @@ if ($type_id) {
 }
 
 if (!empty($errors)) {
-    // Re-show form with errors
-    $_POST['_errors'] = $errors;
-    include 'request_form.php';
+    $_SESSION['form_errors'] = $errors;
+    $_SESSION['form_data']   = $_POST;
+    header('Location: request_form?type=' . urlencode($type_code));
     exit;
 }
 

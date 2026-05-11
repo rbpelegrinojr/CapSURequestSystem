@@ -1,5 +1,11 @@
 <?php
+session_start();
 require_once __DIR__ . '/includes/functions.php';
+
+// Read and immediately clear flash data set by submit_request.php (PRG pattern)
+$form_errors = $_SESSION['form_errors'] ?? [];
+$old_input   = $_SESSION['form_data']   ?? [];
+unset($_SESSION['form_errors'], $_SESSION['form_data']);
 
 $type_code = strtoupper(trim($_GET['type'] ?? ''));
 if (!$type_code) {
@@ -96,6 +102,17 @@ $icons = [
 
                 <div class="form-card">
                     <form action="submit_request" method="POST" id="requestForm" novalidate>
+
+                        <?php if (!empty($form_errors)): ?>
+                        <div class="alert alert-danger mb-4" role="alert">
+                            <strong><i class="bi bi-exclamation-triangle-fill me-2"></i>Please fix the following errors:</strong>
+                            <ul class="mb-0 mt-2 ps-3">
+                                <?php foreach ($form_errors as $err): ?>
+                                <li><?= htmlspecialchars($err) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                        <?php endif; ?>
                         <input type="hidden" name="request_type_id" value="<?= (int)$request_type['id'] ?>">
                         <input type="hidden" name="type_code" value="<?= htmlspecialchars($request_type['code']) ?>">
 
@@ -109,42 +126,42 @@ $icons = [
                                 <label class="form-label">Full Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="requester_name"
                                        placeholder="Last Name, First Name M.I."
-                                       value="<?= htmlspecialchars($_POST['requester_name'] ?? '') ?>"
+                                       value="<?= htmlspecialchars($old_input['requester_name'] ?? '') ?>"
                                        required maxlength="150">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Email Address <span class="text-danger">*</span></label>
                                 <input type="email" class="form-control" name="requester_email"
                                        placeholder="your.email@capsu.edu.ph"
-                                       value="<?= htmlspecialchars($_POST['requester_email'] ?? '') ?>"
+                                       value="<?= htmlspecialchars($old_input['requester_email'] ?? '') ?>"
                                        required maxlength="150">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Phone Number</label>
                                 <input type="text" class="form-control" name="requester_phone"
                                        placeholder="+63 9XX XXX XXXX"
-                                       value="<?= htmlspecialchars($_POST['requester_phone'] ?? '') ?>"
+                                       value="<?= htmlspecialchars($old_input['requester_phone'] ?? '') ?>"
                                        maxlength="30">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Department / College / Office <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="requester_department"
                                        placeholder="e.g. College of Engineering"
-                                       value="<?= htmlspecialchars($_POST['requester_department'] ?? '') ?>"
+                                       value="<?= htmlspecialchars($old_input['requester_department'] ?? '') ?>"
                                        required maxlength="150">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Position / Designation <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="requester_position"
                                        placeholder="e.g. Assistant Professor II"
-                                       value="<?= htmlspecialchars($_POST['requester_position'] ?? '') ?>"
+                                       value="<?= htmlspecialchars($old_input['requester_position'] ?? '') ?>"
                                        required maxlength="150">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Purpose <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="purpose"
                                        placeholder="e.g. For loan application"
-                                       value="<?= htmlspecialchars($_POST['purpose'] ?? '') ?>"
+                                       value="<?= htmlspecialchars($old_input['purpose'] ?? '') ?>"
                                        required maxlength="255">
                             </div>
                         </div>
@@ -170,7 +187,7 @@ $icons = [
                                         <option value="">— Select —</option>
                                         <?php foreach ($field['options'] as $opt): ?>
                                         <option value="<?= htmlspecialchars($opt) ?>"
-                                            <?= (($_POST['extra'][$field['name']] ?? '') === $opt) ? 'selected' : '' ?>>
+                                            <?= (($old_input['extra'][$field['name']] ?? '') === $opt) ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($opt) ?>
                                         </option>
                                         <?php endforeach; ?>
@@ -178,12 +195,12 @@ $icons = [
                                 <?php elseif ($field['type'] === 'textarea'): ?>
                                     <textarea class="form-control" name="extra[<?= htmlspecialchars($field['name']) ?>]"
                                               rows="4" placeholder="<?= htmlspecialchars($field['placeholder'] ?? '') ?>"
-                                              <?= !empty($field['required']) ? 'required' : '' ?>><?= htmlspecialchars($_POST['extra'][$field['name']] ?? '') ?></textarea>
+                                              <?= !empty($field['required']) ? 'required' : '' ?>><?= htmlspecialchars($old_input['extra'][$field['name']] ?? '') ?></textarea>
                                 <?php else: ?>
                                     <input type="text" class="form-control"
                                            name="extra[<?= htmlspecialchars($field['name']) ?>]"
                                            placeholder="<?= htmlspecialchars($field['placeholder'] ?? '') ?>"
-                                           value="<?= htmlspecialchars($_POST['extra'][$field['name']] ?? '') ?>"
+                                           value="<?= htmlspecialchars($old_input['extra'][$field['name']] ?? '') ?>"
                                            <?= !empty($field['required']) ? 'required' : '' ?>>
                                 <?php endif; ?>
                             </div>
