@@ -30,6 +30,62 @@ $letterhead  = get_setting('letterhead_html') ?: '';
 $global_footer = get_setting('footer_html') ?: '';
 $signatories = get_active_signatories();
 
+$tracking  = $request['tracking_number'];
+$filename  = 'CapSU_' . str_replace('-', '', $tracking) . '_' . date('Ymd') . '.docx';
+
+// ── PATH A: Use uploaded Word (.docx) template ────────────────────────────
+$docx_tpl_path = '';
+if (!empty($template['template_docx_path'])) {
+    $candidate = __DIR__ . '/docx_templates/' . basename($template['template_docx_path']);
+    if (file_exists($candidate)) {
+        $docx_tpl_path = $candidate;
+    }
+}
+
+if ($docx_tpl_path !== '') {
+    // Copy template to a temp file so we can edit it without touching the original
+    $out_path = sys_get_temp_dir() . '/capsu_filled_' . $tracking . '_' . time() . '.docx';
+    if (!copy($docx_tpl_path, $out_path)) {
+        die('Could not create temporary DOCX file.');
+    }
+
+    $zip = new ZipArchive();
+    if ($zip->open($out_path) !== true) {
+        @unlink($out_path);
+        die('Could not open DOCX template.');
+    }
+
+    // Replace placeholders in all relevant XML parts
+    $parts = [];
+    for ($i = 0; $i < $zip->numFiles; $i++) {
+        $name = $zip->getNameIndex($i);
+        if (preg_match('#^word/(document|header\d*|footer\d*|endnotes|footnotes)\.xml$#', $name)) {
+            $parts[] = $name;
+        }
+    }
+
+    foreach ($parts as $part) {
+        $xml = $zip->getFromName($part);
+        if ($xml !== false) {
+            $xml = fill_template_for_xml($xml, $request, $additional_data);
+            $zip->addFromString($part, $xml);
+        }
+    }
+
+    $zip->close();
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Content-Length: ' . filesize($out_path));
+    header('Cache-Control: private, no-cache, no-store');
+    header('Pragma: no-cache');
+    readfile($out_path);
+    @unlink($out_path);
+    exit;
+}
+
+// ── PATH B: Generate DOCX from HTML template (original behaviour) ─────────
+
 // Fill template
 $template_content = $template['template_content'] ?? '';
 $filled_content   = fill_template($template_content, $request, $additional_data);
@@ -84,7 +140,6 @@ function xmlspecialchars($str) {
 $doc_title = strtoupper($request['type_name']);
 $filled_plain = html_to_docx_xml($filled_content);
 $date_str = date('F d, Y');
-$tracking = $request['tracking_number'];
 
 // Signatory XML rows
 $sig_xml = '';
@@ -267,8 +322,6 @@ $zip->addFromString('word/document.xml',             $document_xml);
 $zip->addFromString('word/styles.xml',               $styles_xml);
 $zip->addFromString('word/_rels/document.xml.rels',  $word_relationships_xml);
 $zip->close();
-
-$filename = 'CapSU_' . str_replace('-', '', $tracking) . '_' . date('Ymd') . '.docx';
 
 header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
 header('Content-Disposition: attachment; filename="' . $filename . '"');

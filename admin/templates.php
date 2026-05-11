@@ -36,7 +36,8 @@ $templates = get_request_types_with_templates();
                     <tr>
                         <th>Request Type</th>
                         <th>Code</th>
-                        <th>Template Status</th>
+                        <th>HTML Template</th>
+                        <th>Word (.docx) Template</th>
                         <th>Available Placeholders</th>
                         <th>Actions</th>
                     </tr>
@@ -58,6 +59,13 @@ $templates = get_request_types_with_templates();
                             <span style="color:#198754;font-size:0.82rem;font-weight:600;"><i class="bi bi-check-circle me-1"></i>Has Template</span>
                             <?php else: ?>
                             <span style="color:#dc3545;font-size:0.82rem;font-weight:600;"><i class="bi bi-x-circle me-1"></i>No Template</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if (!empty($tpl['template_docx_path'])): ?>
+                            <span style="color:#198754;font-size:0.82rem;font-weight:600;"><i class="bi bi-file-word me-1"></i>Uploaded</span>
+                            <?php else: ?>
+                            <span style="color:#6c757d;font-size:0.82rem;"><i class="bi bi-dash-circle me-1"></i>None</span>
                             <?php endif; ?>
                         </td>
                         <td>
