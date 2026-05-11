@@ -267,7 +267,7 @@ const EDITOR_FONT_SIZES = '8pt 9pt 10pt 11pt 12pt 14pt 16pt 18pt 20pt 22pt 24pt 
 // Word-like document editor
 tinymce.init({
     selector: '#template_content',
-    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks visualchars code fullscreen insertdatetime media table pagebreak nonbreaking directionality charmap wordcount help',
+    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks visualchars code fullscreen insertdatetime media table pagebreak nonbreaking directionality charmap wordcount quickbars help',
     menubar: 'file edit view insert format table tools help',
     toolbar: [
         'undo redo | fontfamily fontsize blocks | bold italic underline strikethrough | forecolor backcolor | removeformat',
@@ -290,6 +290,8 @@ tinymce.init({
     table_default_attributes: {
         border: '1',
     },
+    // Enable resize handles on selected images (click-and-drag corners to resize)
+    object_resizing: true,
     // Allow dragging and dropping images into the editor
     paste_data_images: true,
     images_upload_handler: function (blobInfo, progress) {
@@ -300,6 +302,19 @@ tinymce.init({
             reader.readAsDataURL(blobInfo.blob());
         });
     },
+    // Advanced tab in image dialog: float/alignment, dimensions, spacing
+    image_advtab: true,
+    image_title: true,
+    // Named positioning classes available in the image dialog Style dropdown
+    image_class_list: [
+        { title: 'None',         value: '' },
+        { title: 'Float Left',   value: 'img-float-left' },
+        { title: 'Float Right',  value: 'img-float-right' },
+        { title: 'Centered',     value: 'img-center' },
+    ],
+    // Quick inline toolbar shown when an image is selected
+    quickbars_selection_toolbar: 'alignleft aligncenter alignright | rotateleft rotateright | imageoptions',
+    quickbars_insert_toolbar: false,
     // Show a full document page in the editing area
     content_style: [
         'body {',
@@ -320,6 +335,9 @@ tinymce.init({
         '}',
         'table, td, th { border: 1px solid #999; padding: 4px 8px; }',
         'img { max-width: 100%; height: auto; }',
+        'img.img-float-left { float: left; margin: 0 16px 8px 0; }',
+        'img.img-float-right { float: right; margin: 0 0 8px 16px; }',
+        'img.img-center { display: block; margin: 8px auto; float: none; }',
         'p { margin: 0 0 10pt; }',
     ].join(''),
     setup: function(editor) {
