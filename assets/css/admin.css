@@ -615,6 +615,14 @@ body {
     border-color: var(--accent-gold);
 }
 
+/* ===== INPUT GROUP COMPAT ===== */
+.input-group > .admin-form-control {
+    position: relative;
+    flex: 1 1 auto;
+    width: 1%;
+    min-width: 0;
+}
+
 /* ===== LOGIN PAGE ===== */
 .admin-login-wrap {
     min-height: 100vh;
