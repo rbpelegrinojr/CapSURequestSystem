@@ -50,7 +50,7 @@ $error_msg   = $_GET['error'] ?? '';
             <a href="requests.php" class="btn-admin-primary btn-admin-sm" style="background:var(--text-muted);">
                 <i class="bi bi-arrow-left"></i> Back
             </a>
-            <a href="print_request.php?id=<?= $id ?>" target="_blank" class="btn-admin-primary btn-admin-sm">
+            <a href="download_docx.php?id=<?= $id ?>" class="btn-admin-primary btn-admin-sm">
                 <i class="bi bi-printer"></i> Print
             </a>
             <a href="download_docx.php?id=<?= $id ?>" class="btn-admin-gold btn-admin-sm">
