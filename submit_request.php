@@ -2,7 +2,7 @@
 require_once __DIR__ . '/includes/functions.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: index.php');
+    header('Location: index');
     exit;
 }
 
@@ -113,10 +113,10 @@ $admin_body = "
     <tr><td style='padding:8px 12px;background:#f4f6fb;font-weight:700;'>Department</td><td style='padding:8px 12px;border-bottom:1px solid #eee;'>" . htmlspecialchars($department) . "</td></tr>
     <tr><td style='padding:8px 12px;background:#f4f6fb;font-weight:700;'>Purpose</td><td style='padding:8px 12px;'>" . htmlspecialchars($purpose) . "</td></tr>
 </table>
-<p style='margin-top:20px;'><a href='" . htmlspecialchars(APP_URL) . "/admin/view_request.php?id={$request_id}' style='background:#1a3a6b;color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:700;'>View Request in Admin Panel</a></p>
+<p style='margin-top:20px;'><a href='" . htmlspecialchars(APP_URL) . "/admin/view_request?id={$request_id}' style='background:#1a3a6b;color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:700;'>View Request in Admin Panel</a></p>
 ";
 $sent_admin = send_system_email($admin_email, 'Admin', $admin_subject, $admin_body);
 log_email($request_id, $admin_email, $admin_subject, $sent_admin ? 'sent' : 'failed');
 
-header('Location: track_request.php?tracking=' . urlencode($tracking) . '&new=1');
+header('Location: track_request?tracking=' . urlencode($tracking) . '&new=1');
 exit;

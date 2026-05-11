@@ -7,7 +7,7 @@ $type_id = filter_input(INPUT_POST, 'type_id', FILTER_VALIDATE_INT);
 $action  = $_POST['action'] ?? 'upload';
 
 if (!$type_id) {
-    header('Location: templates.php');
+    header('Location: templates');
     exit;
 }
 
@@ -15,7 +15,7 @@ $db = get_db();
 $stmt = $db->prepare('SELECT id FROM request_types WHERE id = ?');
 $stmt->execute([$type_id]);
 if (!$stmt->fetch()) {
-    header('Location: templates.php');
+    header('Location: templates');
     exit;
 }
 
@@ -23,7 +23,7 @@ $stmt2 = $db->prepare('SELECT id, template_docx_path FROM document_templates WHE
 $stmt2->execute([$type_id]);
 $template = $stmt2->fetch();
 
-$redirect = 'template_editor.php?type_id=' . $type_id;
+$redirect = 'template_editor?type_id=' . $type_id;
 
 // ── Clear action ────────────────────────────────────────────────────────────
 if ($action === 'clear') {

@@ -33,7 +33,7 @@ $uni_email   = get_setting('university_email') ?: 'info@capsu.edu.ph';
 <!-- HEADER -->
 <header class="site-header">
     <nav class="navbar navbar-expand-lg container-xl">
-        <a class="navbar-brand" href="index.php">
+        <a class="navbar-brand" href="index">
             <div class="brand-logo-circle">CS</div>
             <div class="brand-text">
                 <span class="brand-name"><?= htmlspecialchars($uni_name) ?></span>
@@ -46,13 +46,13 @@ $uni_email   = get_setting('university_email') ?: 'info@capsu.edu.ph';
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <a class="nav-link active" href="index.php"><i class="bi bi-house-door me-1"></i>Home</a>
+                    <a class="nav-link active" href="index"><i class="bi bi-house-door me-1"></i>Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="track_request.php"><i class="bi bi-search me-1"></i>Track Request</a>
+                    <a class="nav-link" href="track_request"><i class="bi bi-search me-1"></i>Track Request</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="admin/index.php"><i class="bi bi-person-lock me-1"></i>Admin</a>
+                    <a class="nav-link" href="admin/index"><i class="bi bi-person-lock me-1"></i>Admin</a>
                 </li>
             </ul>
         </div>
@@ -71,7 +71,7 @@ $uni_email   = get_setting('university_email') ?: 'info@capsu.edu.ph';
                     <a href="#request-types" class="btn btn-warning fw-bold px-4 py-2">
                         <i class="bi bi-file-earmark-plus me-2"></i>Submit a Request
                     </a>
-                    <a href="track_request.php" class="btn btn-outline-light px-4 py-2">
+                    <a href="track_request" class="btn btn-outline-light px-4 py-2">
                         <i class="bi bi-search me-2"></i>Track My Request
                     </a>
                 </div>
@@ -124,7 +124,7 @@ $uni_email   = get_setting('university_email') ?: 'info@capsu.edu.ph';
         <div class="row g-3">
             <?php foreach ($request_types as $rt): ?>
             <div class="col-sm-6 col-lg-4">
-                <a href="request_form.php?type=<?= urlencode($rt['code']) ?>" class="request-card">
+                <a href="request_form?type=<?= urlencode($rt['code']) ?>" class="request-card">
                     <div class="card-icon">
                         <i class="bi <?= $icons[$rt['code']] ?? 'bi-file-earmark-text' ?>"></i>
                     </div>
@@ -147,7 +147,7 @@ $uni_email   = get_setting('university_email') ?: 'info@capsu.edu.ph';
                 <i class="bi bi-radar display-5 text-warning mb-3 d-block"></i>
                 <h3>Track Your Request</h3>
                 <p>Enter your tracking number below to check the status of your submitted request.</p>
-                <form action="track_request.php" method="GET" class="mt-3">
+                <form action="track_request" method="GET" class="mt-3">
                     <div class="track-input-group">
                         <input type="text" name="tracking" placeholder="e.g. CAPSU-20240511-AB3DE"
                                maxlength="25" style="text-transform:uppercase;" required>
@@ -177,14 +177,14 @@ $uni_email   = get_setting('university_email') ?: 'info@capsu.edu.ph';
             </div>
             <div class="col-lg-3">
                 <h6>Quick Links</h6>
-                <p><a href="index.php"><i class="bi bi-chevron-right me-1"></i>Home</a></p>
-                <p><a href="track_request.php"><i class="bi bi-chevron-right me-1"></i>Track Request</a></p>
-                <p><a href="admin/index.php"><i class="bi bi-chevron-right me-1"></i>Admin Portal</a></p>
+                <p><a href="index"><i class="bi bi-chevron-right me-1"></i>Home</a></p>
+                <p><a href="track_request"><i class="bi bi-chevron-right me-1"></i>Track Request</a></p>
+                <p><a href="admin/index"><i class="bi bi-chevron-right me-1"></i>Admin Portal</a></p>
             </div>
             <div class="col-lg-5">
                 <h6>Available Documents</h6>
                 <?php foreach ($request_types as $rt): ?>
-                <p><a href="request_form.php?type=<?= urlencode($rt['code']) ?>">
+                <p><a href="request_form?type=<?= urlencode($rt['code']) ?>">
                     <i class="bi bi-chevron-right me-1"></i><?= htmlspecialchars($rt['name']) ?>
                 </a></p>
                 <?php endforeach; ?>

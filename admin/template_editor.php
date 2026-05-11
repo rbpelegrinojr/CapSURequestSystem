@@ -5,7 +5,7 @@ require_admin_login();
 
 $type_id = filter_input(INPUT_GET, 'type_id', FILTER_VALIDATE_INT);
 if (!$type_id) {
-    header('Location: templates.php');
+    header('Location: templates');
     exit;
 }
 
@@ -14,7 +14,7 @@ $stmt = $db->prepare('SELECT * FROM request_types WHERE id = ?');
 $stmt->execute([$type_id]);
 $request_type = $stmt->fetch();
 if (!$request_type) {
-    header('Location: templates.php');
+    header('Location: templates');
     exit;
 }
 
@@ -139,7 +139,7 @@ HTML;
     <div class="page-header-bar">
         <h4><i class="bi bi-pencil-square"></i> Template Editor</h4>
         <div class="d-flex gap-2">
-            <a href="templates.php" class="btn-admin-primary btn-admin-sm" style="background:var(--text-muted);">
+            <a href="templates" class="btn-admin-primary btn-admin-sm" style="background:var(--text-muted);">
                 <i class="bi bi-arrow-left"></i> Back
             </a>
             <button type="button" id="previewBtn" class="btn-admin-primary btn-admin-sm" onclick="previewTemplate()">
@@ -231,11 +231,11 @@ HTML;
                                     </div>
                                 </div>
                                 <div class="d-flex gap-2 flex-shrink-0">
-                                    <a href="download_template_file.php?type_id=<?= $type_id ?>"
+                                    <a href="download_template_file?type_id=<?= $type_id ?>"
                                        class="btn-admin-primary btn-admin-sm">
                                         <i class="bi bi-download"></i> Download
                                     </a>
-                                    <form method="POST" action="upload_template_docx.php"
+                                    <form method="POST" action="upload_template_docx"
                                           onsubmit="return confirm('Remove the uploaded Word template?');">
                                         <input type="hidden" name="type_id" value="<?= $type_id ?>">
                                         <input type="hidden" name="action" value="clear">
@@ -269,7 +269,7 @@ HTML;
                             <span class="text-muted small">Upload a <code>.docx</code> file designed in Microsoft Word or LibreOffice Writer</span>
                         </div>
                         <div class="card-body">
-                            <form method="POST" action="upload_template_docx.php" enctype="multipart/form-data" id="docxUploadForm">
+                            <form method="POST" action="upload_template_docx" enctype="multipart/form-data" id="docxUploadForm">
                                 <input type="hidden" name="type_id" value="<?= $type_id ?>">
                                 <input type="hidden" name="action" value="upload">
                                 <div class="mb-3">

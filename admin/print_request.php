@@ -5,13 +5,13 @@ require_admin_login();
 
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$id) {
-    header('Location: requests.php');
+    header('Location: requests');
     exit;
 }
 
 $request = get_request_with_type($id);
 if (!$request) {
-    header('Location: requests.php');
+    header('Location: requests');
     exit;
 }
 
@@ -170,8 +170,8 @@ $filled_content = fill_template($template_content, $request, $additional_data);
 <!-- Print Controls -->
 <div class="no-print-controls">
     <button onclick="window.print()">&#128438; Print</button>
-    <a href="download_docx.php?id=<?= $id ?>" class="gold">&#128196; Download DOCX</a>
-    <a href="view_request.php?id=<?= $id ?>" style="background:#6c757d;">&#8592; Back</a>
+    <a href="download_docx?id=<?= $id ?>" class="gold">&#128196; Download DOCX</a>
+    <a href="view_request?id=<?= $id ?>" style="background:#6c757d;">&#8592; Back</a>
 </div>
 
 <div class="page">

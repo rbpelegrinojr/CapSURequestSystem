@@ -1,0 +1,12 @@
+Options -MultiViews
+RewriteEngine On
+
+# Redirect requests with .php extension to the extensionless URL
+RewriteCond %{THE_REQUEST} \.php[\s?/]
+RewriteRule ^(.*)\.php$ /$1 [R=301,L,NE,QSA]
+
+# Internally rewrite extensionless URLs to the corresponding .php file
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.+?)/?$ $1.php [L]

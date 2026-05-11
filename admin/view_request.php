@@ -5,14 +5,14 @@ require_admin_login();
 
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$id) {
-    header('Location: requests.php');
+    header('Location: requests');
     exit;
 }
 
 $db = get_db();
 $request = get_request_with_type($id);
 if (!$request) {
-    header('Location: requests.php');
+    header('Location: requests');
     exit;
 }
 
@@ -47,13 +47,13 @@ $error_msg   = $_GET['error'] ?? '';
     <div class="page-header-bar">
         <h4><i class="bi bi-file-text"></i> Request Details</h4>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="requests.php" class="btn-admin-primary btn-admin-sm" style="background:var(--text-muted);">
+            <a href="requests" class="btn-admin-primary btn-admin-sm" style="background:var(--text-muted);">
                 <i class="bi bi-arrow-left"></i> Back
             </a>
-            <a href="print_request.php?id=<?= $id ?>" class="btn-admin-primary btn-admin-sm">
+            <a href="print_request?id=<?= $id ?>" class="btn-admin-primary btn-admin-sm">
                 <i class="bi bi-printer"></i> Print
             </a>
-            <a href="download_docx.php?id=<?= $id ?>" class="btn-admin-gold btn-admin-sm">
+            <a href="download_docx?id=<?= $id ?>" class="btn-admin-gold btn-admin-sm">
                 <i class="bi bi-file-word"></i> Download DOCX
             </a>
         </div>
@@ -189,7 +189,7 @@ $error_msg   = $_GET['error'] ?? '';
                     <h5><i class="bi bi-arrow-repeat"></i> Update Status</h5>
                 </div>
                 <div class="card-body">
-                    <form action="process_request.php" method="POST">
+                    <form action="process_request" method="POST">
                         <input type="hidden" name="request_id" value="<?= $id ?>">
                         <input type="hidden" name="action" value="update_status">
                         <div class="mb-3">
@@ -224,7 +224,7 @@ $error_msg   = $_GET['error'] ?? '';
                     <h5><i class="bi bi-send"></i> Send Email to Requester</h5>
                 </div>
                 <div class="card-body">
-                    <form action="send_email.php" method="POST">
+                    <form action="send_email" method="POST">
                         <input type="hidden" name="request_id" value="<?= $id ?>">
                         <div class="mb-3">
                             <label class="admin-form-label">Subject</label>

@@ -3,7 +3,7 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/functions.php';
 
 if (is_admin_logged_in()) {
-    header('Location: dashboard.php');
+    header('Location: dashboard');
     exit;
 }
 
@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!admin_login($username, $password)) {
         $error = 'Invalid username or password. Please try again.';
     } else {
-        header('Location: dashboard.php');
+        header('Location: dashboard');
         exit;
     }
 }
@@ -78,7 +78,7 @@ $uni_name = get_setting('university_name') ?: 'Capiz State University';
         </form>
 
         <div class="text-center mt-4">
-            <a href="../index.php" class="text-muted small text-decoration-none">
+            <a href="../index" class="text-muted small text-decoration-none">
                 <i class="bi bi-arrow-left me-1"></i>Back to User Portal
             </a>
         </div>

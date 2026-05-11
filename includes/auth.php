@@ -9,7 +9,7 @@ function is_admin_logged_in() {
 function require_admin_login() {
     if (!is_admin_logged_in()) {
         $base = get_admin_base_url();
-        header('Location: ' . $base . '/index.php');
+        header('Location: ' . $base . '/index');
         exit;
     }
 }
@@ -48,6 +48,6 @@ function admin_logout() {
         );
     }
     session_destroy();
-    header('Location: index.php');
+    header('Location: index');
     exit;
 }
