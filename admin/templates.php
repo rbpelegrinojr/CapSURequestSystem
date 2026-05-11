@@ -101,7 +101,11 @@ $templates = get_request_types_with_templates();
             <div class="row g-3">
                 <?php
                 $placeholders = [
-                    ['{{requester_name}}',       'Full name of the requester'],
+                    ['{{requester_name}}',       'Full name of the requester (composed)'],
+                    ['{{requester_firstname}}',  'First name'],
+                    ['{{requester_middlename}}', 'Middle initial (e.g. A.)'],
+                    ['{{requester_lastname}}',   'Last name'],
+                    ['{{requester_salutation}}', 'Salutation (Mr. or Ms.)'],
                     ['{{requester_email}}',      'Email address'],
                     ['{{requester_phone}}',      'Phone number'],
                     ['{{requester_department}}', 'Department / College / Office'],
