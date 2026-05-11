@@ -193,37 +193,20 @@ function build_template_replacements($request_data, $additional_data = []) {
 
 /**
  * Fill a Word XML part (document.xml, header*.xml, footer*.xml) with request data.
- * Values are XML-escaped. Also handles the common case where Word splits a
- * placeholder across multiple adjacent w:t elements in the same w:r run.
+ * Values are XML-escaped. Handles the common Word behaviour of splitting a
+ * {{placeholder}} across multiple <w:r> runs: since XML tag names and attributes
+ * cannot contain { or }, the pattern [^{}]* safely spans both plain text and any
+ * XML markup that may appear inside the braces.
  */
 function fill_template_for_xml($xml_content, $request_data, $additional_data = []) {
     $replacements = build_template_replacements($request_data, $additional_data);
 
-    // Pre-process: merge text fragments within each run (<w:r>) so that a
-    // placeholder such as {{name}} that Word stored as two adjacent <w:t> nodes
-    // inside the same <w:r> is joined into one before replacement.
-    $xml_content = preg_replace_callback(
-        '/(<w:r\b[^>]*>)(.*?)(<\/w:r>)/s',
-        function ($m) {
-            // Collect all <w:t> content within this run
-            $run_inner = $m[2];
-            $texts = [];
-            preg_match_all('/<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/s', $run_inner, $hits);
-            if (count($hits[1]) > 1) {
-                // More than one w:t in this run — join them into the first one
-                $joined = implode('', $hits[1]);
-                // Replace all w:t elements with a single one preserving xml:space
-                $run_inner = preg_replace('/<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/s', '', $run_inner, -1);
-                $run_inner .= '<w:t xml:space="preserve">' . $joined . '</w:t>';
-            }
-            return $m[1] . $run_inner . $m[3];
-        },
-        $xml_content
-    );
-
-    // Replace placeholders with XML-escaped values
-    return preg_replace_callback('/\{\{\s*([^}]+?)\s*\}\}/', function ($m) use ($replacements) {
-        $key = trim($m[1]);
+    // Match {{ ... }} even when Word has split the placeholder text across several
+    // runs (e.g. {{requester_ in one <w:r> and name}} in the next). Strip any XML
+    // tags from the captured inner text to recover the plain-text key, then replace
+    // the entire matched span (including embedded XML) with the escaped value.
+    return preg_replace_callback('/\{\{([^{}]*)\}\}/s', function ($m) use ($replacements) {
+        $key = trim(preg_replace('/<[^>]+>/', '', $m[1]));
         if (array_key_exists($key, $replacements)) {
             return htmlspecialchars($replacements[$key], ENT_XML1 | ENT_COMPAT, 'UTF-8');
         }

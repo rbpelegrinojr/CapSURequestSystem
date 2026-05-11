@@ -186,7 +186,7 @@ $signatories = get_active_signatories();
             <?= $filled_content ?>
         </div>
     <?php else: ?>
-        <!-- Default letterhead + content when no template is set -->
+        <!-- Fallback: no HTML template configured — render document from request data -->
         <div class="doc-header">
             <?php if ($letterhead): ?>
                 <?= $letterhead ?>
@@ -202,7 +202,42 @@ $signatories = get_active_signatories();
         <div class="doc-date"><?= date('F d, Y') ?></div>
         <p class="doc-salutation">TO WHOM IT MAY CONCERN:</p>
         <div class="doc-body">
-            <p style="color:#999;text-align:center;">[No template content configured. Please edit the template in the admin panel.]</p>
+            <?php
+            $name       = htmlspecialchars($request['requester_name'] ?? '');
+            $position   = htmlspecialchars($request['requester_position'] ?? '');
+            $department = htmlspecialchars($request['requester_department'] ?? '');
+            $purpose    = htmlspecialchars($request['purpose'] ?? '');
+
+            // Build the certification sentence incrementally for readability.
+            $cert_parts = ['This is to certify that <strong>' . $name . '</strong>'];
+            if ($position)   { $cert_parts[] = ', <em>' . $position . '</em>'; }
+            if ($department) { $cert_parts[] = ' of the <em>' . $department . '</em>'; }
+            $cert_parts[] = ', has requested this document';
+            if ($purpose)    { $cert_parts[] = ' for the purpose of <strong>' . $purpose . '</strong>'; }
+            $cert_parts[] = '.';
+            ?>
+            <p style="text-indent:36pt;"><?= implode('', $cert_parts) ?></p>
+            <p style="text-indent:36pt;">
+                This certification is being issued upon the request of the above-named individual for whatever legal purpose it may serve.
+            </p>
+            <?php if (!empty($additional_data)): ?>
+            <table style="width:100%;margin-top:16pt;border-collapse:collapse;font-size:11pt;">
+                <?php
+                $field_labels = [];
+                $form_fields_raw = json_decode($request['form_fields'] ?? '[]', true) ?: [];
+                foreach ($form_fields_raw as $ff) {
+                    if (isset($ff['name'], $ff['label'])) {
+                        $field_labels[$ff['name']] = $ff['label'];
+                    }
+                }
+                foreach ($additional_data as $key => $value): ?>
+                <tr>
+                    <td style="padding:4pt 8pt 4pt 0;font-weight:600;white-space:nowrap;width:40%;"><?= htmlspecialchars($field_labels[$key] ?? ucwords(str_replace('_', ' ', $key))) ?>:</td>
+                    <td style="padding:4pt 0;"><?= htmlspecialchars($value) ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 
