@@ -313,7 +313,11 @@ HTML;
                             <p class="text-muted small mb-2">Type these exactly in your Word document. Click to copy.</p>
                             <?php
                             $common_placeholders = [
-                                'requester_name'       => 'Full name',
+                                'requester_name'       => 'Full name (composed)',
+                                'requester_firstname'  => 'First name',
+                                'requester_middlename' => 'Middle initial (e.g. A.)',
+                                'requester_lastname'   => 'Last name',
+                                'requester_salutation' => 'Salutation (Mr or Ms)',
                                 'requester_email'      => 'Email address',
                                 'requester_phone'      => 'Phone number',
                                 'requester_department' => 'Department',

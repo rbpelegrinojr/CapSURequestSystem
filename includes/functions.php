@@ -106,8 +106,14 @@ function get_stats() {
 }
 
 function fill_template($template_content, $request_data, $additional_data = []) {
+    $sex = $request_data['requester_sex'] ?? '';
+    $salutation = ($sex === 'Male') ? 'Mr' : (($sex === 'Female') ? 'Ms' : '');
     $replacements = [
         'requester_name'       => htmlspecialchars($request_data['requester_name'] ?? ''),
+        'requester_firstname'  => htmlspecialchars($request_data['requester_firstname'] ?? ''),
+        'requester_middlename' => htmlspecialchars($request_data['requester_middlename'] ?? ''),
+        'requester_lastname'   => htmlspecialchars($request_data['requester_lastname'] ?? ''),
+        'requester_salutation' => htmlspecialchars($salutation),
         'requester_email'      => htmlspecialchars($request_data['requester_email'] ?? ''),
         'requester_phone'      => htmlspecialchars($request_data['requester_phone'] ?? ''),
         'requester_department' => htmlspecialchars($request_data['requester_department'] ?? ''),
@@ -167,8 +173,14 @@ function sanitize_html_output($str) {
  * Used by docx template filling where each caller handles its own escaping.
  */
 function build_template_replacements($request_data, $additional_data = []) {
+    $sex = $request_data['requester_sex'] ?? '';
+    $salutation = ($sex === 'Male') ? 'Mr' : (($sex === 'Female') ? 'Ms' : '');
     $replacements = [
         'requester_name'       => $request_data['requester_name'] ?? '',
+        'requester_firstname'  => $request_data['requester_firstname'] ?? '',
+        'requester_middlename' => $request_data['requester_middlename'] ?? '',
+        'requester_lastname'   => $request_data['requester_lastname'] ?? '',
+        'requester_salutation' => $salutation,
         'requester_email'      => $request_data['requester_email'] ?? '',
         'requester_phone'      => $request_data['requester_phone'] ?? '',
         'requester_department' => $request_data['requester_department'] ?? '',
