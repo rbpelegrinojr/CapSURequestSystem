@@ -53,9 +53,7 @@ $error_msg   = $_GET['error'] ?? '';
             <a href="print_request?id=<?= $id ?>" class="btn-admin-primary btn-admin-sm">
                 <i class="bi bi-printer"></i> Print
             </a>
-            <a href="download_docx?id=<?= $id ?>" class="btn-admin-gold btn-admin-sm">
-                <i class="bi bi-file-word"></i> Download DOCX
-            </a>
+            <?php /* Download DOCX button hidden */ ?>
         </div>
     </div>
 
