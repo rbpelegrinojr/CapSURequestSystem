@@ -209,6 +209,13 @@ function build_template_replacements($request_data, $additional_data = []) {
  * superscript.  Only handles the common case where the placeholder lives entirely
  * within one <w:r>/<w:t> element; the generic replacement in fill_template_for_xml
  * acts as a plain-text fallback for the (rare) split-run case.
+ *
+ * Note on the delimiter pattern \{\{\s*current_date\s*\}\}: within a single <w:t>
+ * element there are no XML tags — only plain text — so \s* is sufficient to handle
+ * spaces between the braces and the key.  When the {{ or }} delimiters themselves
+ * span different <w:t> elements (cross-run split), this function cannot match; the
+ * generic pattern in fill_template_for_xml (which uses \{[^{}]*\{…\}[^{}]*\}) will
+ * catch that case and replace the date as plain text.
  */
 function replace_date_placeholder_with_superscript($xml, $date_str) {
     // Match a full <w:r> whose <w:t> contains {{current_date}} or {{ current_date }}, capturing:
