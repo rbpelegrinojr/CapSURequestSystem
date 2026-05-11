@@ -70,7 +70,7 @@ $form_fields = json_decode($request_type['form_fields'] ?? '[]', true) ?: [];
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../assets/css/admin.css">
-    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="../assets/tinymce/tinymce.min.js"></script>
 </head>
 <body>
 <?php include __DIR__ . '/includes/sidebar.php'; ?>
